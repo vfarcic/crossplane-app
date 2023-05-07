@@ -103,12 +103,28 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].readinessProbe.httpGet.port
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+      transforms:
+      - type: string
+        string:
+          fmt: "%s-postgresql"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
+      transforms:
+      - type: string
+        string:
+          fmt: "%s-postgresql"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+      transforms:
+      - type: string
+        string:
+          fmt: "%s-postgresql"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+      transforms:
+      - type: string
+        string:
+          fmt: "%s-postgresql"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[4].value
     - fromFieldPath: spec.id

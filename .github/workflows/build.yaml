@@ -11,13 +11,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Install the `up` CLI
+      - name: Build the package
         run: |
           cd package
           curl -sL https://cli.upbound.io | sh
           ./up login --token ${{ secrets.UP_TOKEN }}
-      - name: Build the package
-        run: |
           export VERSION=v0.5.${{ github.run_number }}
           ./up xpkg build --name app.xpkg
           ./up xpkg push --package app.xpkg xpkg.upbound.io/${{ secrets.UP_ACCOUNT }}/dot-application:$VERSION

@@ -1,6 +1,8 @@
 ## Publish To Upbound
 
 ```bash
+cd package
+
 # Replace `[...]` with the Upbound Cloud account
 export UP_ACCOUNT=[...]
 
@@ -11,7 +13,8 @@ export UP_TOKEN=[...]
 
 up login
 
-export VERSION=v0.5.0
+# Replace `[...]` with the version of the package (e.g., `v0.5.0`)
+export VERSION=[...]
 
 up xpkg build --name app.xpkg
 

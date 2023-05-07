@@ -4,7 +4,7 @@ on:
     branches:
       - main
 jobs:
-  deploy-app:
+  build-package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -13,10 +13,10 @@ jobs:
           fetch-depth: 0
       - name: Install the `up` CLI
         run: |
-          curl -sL https://cli.upbound.io | sh
-          up login
+          curl -sLo up.deb "https://cli.upbound.io/stable/${VERSION}/deb/linux_${ARCH}/up.deb"
+          ./up login
       - name: Build the package
         run: |
           export VERSION=v0.5.${{ github.run_number }}
-          up xpkg build --name app.xpkg
-          up xpkg push --package app.xpkg xpkg.upbound.io/$UP_ACCOUNT/dot-application:$VERSION
+          ./up xpkg build --name app.xpkg
+          ./up xpkg push --package app.xpkg xpkg.upbound.io/$UP_ACCOUNT/dot-application:$VERSION

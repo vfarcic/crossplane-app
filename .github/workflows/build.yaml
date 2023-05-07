@@ -16,6 +16,8 @@ jobs:
           curl -sL https://cli.upbound.io | sh
           # curl -sLo up.deb "https://cli.upbound.io/stable/v0.16.1/deb/linux_${ARCH}/up.deb"
           echo "111"
+          echo $UP_TOKEN
+          echo $UP_ACCOUNT
           ls -l
           ./up login
       - name: Build the package

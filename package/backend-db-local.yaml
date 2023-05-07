@@ -68,6 +68,7 @@ spec:
                     - name: DB_USERNAME
                       value: postgres
                     - name: DB_NAME
+                      value: cncf-demo
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -105,8 +106,6 @@ spec:
       - type: string
         string:
           fmt: "%s-postgresql"
-    - fromFieldPath: spec.id
-      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[4].value
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name
     readinessChecks:

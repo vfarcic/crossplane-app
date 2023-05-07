@@ -17,6 +17,7 @@ jobs:
           ./up login --token ${{ secrets.UP_TOKEN }}
       - name: Build the package
         run: |
+          cd packages
           export VERSION=v0.5.${{ github.run_number }}
           ./up xpkg build --name app.xpkg
           ./up xpkg push --package app.xpkg xpkg.upbound.io/${{ secrets.UP_ACCOUNT }}/dot-application:$VERSION

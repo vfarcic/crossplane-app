@@ -13,7 +13,8 @@ jobs:
           fetch-depth: 0
       - name: Install the `up` CLI
         run: |
-          curl -sL https://cli.upbound.io | sh
+          # curl -sL https://cli.upbound.io | sh
+          curl -sLo up.deb "https://cli.upbound.io/stable/v0.16.1/deb/linux_${ARCH}/up.deb"
           ./up login
       - name: Build the package
         run: |

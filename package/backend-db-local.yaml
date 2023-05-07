@@ -100,6 +100,12 @@ spec:
         string:
           fmt: "%s-postgresql"
     - fromFieldPath: spec.id
+      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
+      transforms:
+      - type: string
+        string:
+          fmt: "%s-postgresql"
+    - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[4].value
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name

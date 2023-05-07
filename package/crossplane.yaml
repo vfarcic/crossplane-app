@@ -12,3 +12,5 @@ spec:
   dependsOn:
   - provider: xpkg.upbound.io/crossplane-contrib/provider-kubernetes
     version: ">=v0.6.0"
+  - provider: xpkg.upbound.io/devops-toolkit/dot-application
+    version: ">=v0.5.18"

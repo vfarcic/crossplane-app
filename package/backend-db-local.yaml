@@ -59,22 +59,14 @@ spec:
                         memory: 128Mi
                     env:
                     - name: DB_ENDPOINT
-                      valueFrom:
-                        secretKeyRef:
-                          key: endpoint
                     - name: DB_PASSWORD
                       valueFrom:
                         secretKeyRef:
                           key: password
                     - name: DB_PORT
-                      valueFrom:
-                        secretKeyRef:
-                          key: port
-                          optional: true
+                      value: "5432"
                     - name: DB_USERNAME
-                      valueFrom:
-                        secretKeyRef:
-                          key: username
+                      value: postgres
                     - name: DB_NAME
     patches:
     - fromFieldPath: spec.id
@@ -102,25 +94,7 @@ spec:
     - fromFieldPath: spec.parameters.port
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].readinessProbe.httpGet.port
     - fromFieldPath: spec.id
-      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
-      transforms:
-      - type: string
-        string:
-          fmt: "%s-postgresql"
-    - fromFieldPath: spec.id
-      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
-      transforms:
-      - type: string
-        string:
-          fmt: "%s-postgresql"
-    - fromFieldPath: spec.id
-      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
-      transforms:
-      - type: string
-        string:
-          fmt: "%s-postgresql"
-    - fromFieldPath: spec.id
-      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+      toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].value
       transforms:
       - type: string
         string:

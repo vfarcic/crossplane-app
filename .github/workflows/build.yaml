@@ -1,0 +1,22 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install the `up` CLI
+        run: |
+          curl -sL https://cli.upbound.io | sh
+          up login
+      - name: Build the package
+        run: |
+          export VERSION=v0.5.${{ github.run_number }}
+          up xpkg build --name app.xpkg
+          up xpkg push --package app.xpkg xpkg.upbound.io/$UP_ACCOUNT/dot-application:$VERSION

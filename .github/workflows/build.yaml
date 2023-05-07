@@ -14,13 +14,7 @@ jobs:
       - name: Install the `up` CLI
         run: |
           curl -sL https://cli.upbound.io | sh
-          # curl -sLo up.deb "https://cli.upbound.io/stable/v0.16.1/deb/linux_${ARCH}/up.deb"
-          echo "111"
-          echo ${{ secrets.UP_TOKEN }}
-          echo ${{ secrets.UP_ACCOUNT }}
-          echo "222"
-          ls -l
-          ./up login
+          ./up login --token ${{ secrets.UP_TOKEN }}
       - name: Build the package
         run: |
           export VERSION=v0.5.${{ github.run_number }}

@@ -2,16 +2,14 @@ apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
   name: silly-demo
-  labels:
-    app-owner: vfarcic
 spec:
   id: silly-demo
   compositionSelector:
     matchLabels:
-      type: backend
+      type: backend-db-google
       location: local
   parameters:
-    namespace: production
-    image: vfarcic/silly-demo:1.0.8
+    namespace: a-team
+    image: c8n.io/vfarcic/silly-demo:1.4.52
     port: 8080
-    host: silly-demo.34.148.247.11.nip.io
+    host: silly-demo.127.0.0.1.nip.io

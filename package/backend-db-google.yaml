@@ -218,7 +218,8 @@ spec:
                 matchLabels:
                   provider: google-official
                   db: postgresql
-              parameters: {}
+              parameters:
+                version: "13"
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name

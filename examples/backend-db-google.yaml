@@ -13,3 +13,6 @@ spec:
     image: c8n.io/vfarcic/silly-demo:1.4.52
     port: 8080
     host: silly-demo.127.0.0.1.nip.io
+    db:
+      version: "14"
+      size: small

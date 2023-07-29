@@ -8,11 +8,13 @@ kubectl create namespace a-team
 kubectl --namespace a-team apply \
     --filename examples/backend-db-google.yaml
 
-kubectl --namespace a-team get appclaims
+kubectl --namespace a-team get appclaims,sqlclaims
 
-kubectl get sqls,managed
+kubectl get apps,sqls,managed
 
-curl silly-demo.127.0.0.1.nip.io/videos
+kubectl --namespace a-team get all,ingresses
+
+curl silly-demo.$INGRESS_HOST.nip.io/videos
 ```
 
 ## Destroy

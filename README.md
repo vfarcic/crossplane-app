@@ -9,9 +9,18 @@
 chmod +x setup.sh
 
 ./setup.sh
+
+source .env
 ```
 
 ## Create Apps
 
 * [Create App With PostgreSQL In Google Cloud](docs/google-cloud.md)
 
+## Destroy
+
+```bash
+chmod +x destroy.sh
+
+./destroy.sh
+```

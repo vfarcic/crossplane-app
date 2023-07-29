@@ -159,39 +159,39 @@ Press the enter key to continue."
         --from-file=credentials=account.json
 
     echo "
-    apiVersion: gcp.upbound.io/v1beta1
-    kind: ProviderConfig
-    metadata:
-    name: default
-    annotations:
-        argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-        argocd.argoproj.io/hook: PostSync
-    spec:
-    projectID: ${PROJECT_ID}
-    credentials:
-        source: Secret
-        secretRef:
-        namespace: crossplane-system
-        name: gcp-creds
-        key: creds" \
-        | kubectl apply --filename -
+apiVersion: gcp.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/hook: PostSync
+spec:
+  projectID: ${PROJECT_ID}
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: gcp-creds
+      key: creds" \
+    | kubectl apply --filename -
 
     echo "
-    apiVersion: external-secrets.io/v1beta1
-    kind: ClusterSecretStore
-    metadata:
-    name: google
-    spec:
-    provider:
-        gcpsm:
-        auth:
-            secretRef:
-            secretAccessKeySecretRef:
-                name: google
-                key: credentials
-                namespace: external-secrets
-        projectID: ${PROJECT_ID}" \
-        | kubectl apply --filename -
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: google
+spec:
+  provider:
+    gcpsm:
+      auth:
+        secretRef:
+          secretAccessKeySecretRef:
+            name: google
+            key: credentials
+            namespace: external-secrets
+      projectID: ${PROJECT_ID}" \
+    | kubectl apply --filename -
 
 fi
 

@@ -1,34 +1,17 @@
-## Prerequisites
+## Setup
 
 ```bash
-# Create a Kubernetes cluster with an Ingress controller
+# Install `gum` by following the instructions in
+#   https://github.com/charmbracelet/gum#installation
+# Watch https://youtu.be/U8zCHA-9VLA if you are not familiar with
+#   Charm Gum.
 
-helm upgrade --install crossplane crossplane-stable/crossplane \
-    --namespace crossplane-system --create-namespace --wait
+chmod +x setup.sh
 
-kubectl apply --filename dependencies
-
-sleep 2
-
-kubectl wait --for=condition=healthy provider.pkg.crossplane.io \
-    --all --timeout=300s
-
-kubectl apply --filename config.yaml
-
-sleep 10
-
-kubectl wait --for=condition=healthy provider.pkg.crossplane.io \
-    --all --timeout=300s
-
-# Execute only if using databases in Cloud (e.g., Google Cloud,
-#   AWS, Azure, etc.).
-helm upgrade --install \
-    external-secrets external-secrets \
-    --repo https://charts.external-secrets.io \
-    --namespace external-secrets --create-namespace --wait
+./setup.sh
 ```
 
 ## Create Apps
 
-* [ Create App With PostgreSQL In Google Cloud](docs/google-cloud.md)
+* [Create App With PostgreSQL In Google Cloud](docs/google-cloud.md)
 

@@ -56,7 +56,7 @@ kubectl --namespace external-secrets \
     create secret generic google \
     --from-file=credentials=account.json
 
-echo "
+    echo "
 apiVersion: gcp.upbound.io/v1beta1
 kind: ProviderConfig
 metadata:
@@ -65,7 +65,7 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     argocd.argoproj.io/hook: PostSync
 spec:
-  projectID: $PROJECT_ID
+  projectID: ${PROJECT_ID}
   credentials:
     source: Secret
     secretRef:
@@ -74,7 +74,7 @@ spec:
       key: creds" \
     | kubectl apply --filename -
 
-echo "
+    echo "
 apiVersion: external-secrets.io/v1beta1
 kind: ClusterSecretStore
 metadata:
@@ -88,7 +88,7 @@ spec:
             name: google
             key: credentials
             namespace: external-secrets
-      projectID: $PROJECT_ID" \
+      projectID: ${PROJECT_ID}" \
     | kubectl apply --filename -
 ```
 

@@ -23,9 +23,9 @@ kubectl wait --for=condition=healthy provider.pkg.crossplane.io \
 # Execute only if using databases in Cloud (e.g., Google Cloud,
 #   AWS, Azure, etc.).
 helm upgrade --install \
-    external-secrets external-secrets/external-secrets \
+    external-secrets external-secrets \
+    --repo https://charts.external-secrets.io \
     --namespace external-secrets --create-namespace --wait
-
 ```
 
 ## Create Apps

@@ -90,7 +90,6 @@ spec:
             namespace: external-secrets
       projectID: $PROJECT_ID" \
     | kubectl apply --filename -
-
 ```
 
 ## Create App With PostgreSQL In Google Cloud
@@ -103,7 +102,9 @@ kubectl create namespace a-team
 kubectl --namespace a-team apply \
     --filename examples/backend-db-google.yaml
 
-kubectl --namespace a-team get appclaims,sqlclaims
+kubectl --namespace a-team get appclaims
+
+kubectl get sqls,managed
 
 curl silly-demo.127.0.0.1.nip.io/videos
 ```

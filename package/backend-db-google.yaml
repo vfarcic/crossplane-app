@@ -212,7 +212,7 @@ spec:
         forProvider:
           manifest:
             apiVersion: devopstoolkitseries.com/v1alpha1
-            kind: SQL
+            kind: SQLClaim
             spec:
               compositionSelector:
                 matchLabels:

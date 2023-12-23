@@ -209,27 +209,40 @@ spec:
         - patchesFrom:
             apiVersion: v1
             kind: Secret
+            name: endpoint
+            namespace: crossplane-system
             fieldPath: data.endpoint
           toFieldPath: data.endpoint
         - patchesFrom:
             apiVersion: v1
             kind: Secret
+            name: password
+            namespace: crossplane-system
             fieldPath: data.password
           toFieldPath: data.password
         - patchesFrom:
             apiVersion: v1
             kind: Secret
+            name: port
+            namespace: crossplane-system
             fieldPath: data.port
           toFieldPath: data.port
         - patchesFrom:
             apiVersion: v1
             kind: Secret
+            name: username
+            namespace: crossplane-system
             fieldPath: data.username
           toFieldPath: data.username
         forProvider:
           manifest:
             apiVersion: v1
             kind: Secret
+        #     metadata:
+        #       name: # patched
+        #       namespace: # patched
+        # providerConfigRef:
+        #   name: # patched
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name

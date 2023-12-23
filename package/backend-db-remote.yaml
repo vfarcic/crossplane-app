@@ -209,40 +209,27 @@ spec:
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: endpoint
-            namespace: # patched
             fieldPath: data.endpoint
           toFieldPath: data.endpoint
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: password
-            namespace: # patched
             fieldPath: data.password
           toFieldPath: data.password
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: port
-            namespace: # patched
             fieldPath: data.port
           toFieldPath: data.port
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: username
-            namespace: # patched
             fieldPath: data.username
           toFieldPath: data.username
         forProvider:
           manifest:
             apiVersion: v1
             kind: Secret
-            metadata:
-              name: # patched
-              namespace: # patched
-        providerConfigRef:
-          name: # patched
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name

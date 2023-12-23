@@ -209,28 +209,28 @@ spec:
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: # patched
+            name: endpoint
             namespace: # patched
             fieldPath: data.endpoint
           toFieldPath: data.endpoint
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: # patched
+            name: password
             namespace: # patched
             fieldPath: data.password
           toFieldPath: data.password
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: # patched
+            name: port
             namespace: # patched
             fieldPath: data.port
           toFieldPath: data.port
         - patchesFrom:
             apiVersion: v1
             kind: Secret
-            name: # patched
+            name: username
             namespace: # patched
             fieldPath: data.username
           toFieldPath: data.username

@@ -106,8 +106,6 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[4].value
     - fromFieldPath: spec.parameters.kubernetesProviderConfigName
       toFieldPath: spec.providerConfigRef.name
-    readinessChecks:
-    - type: None
   - name: service
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -148,8 +146,6 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort
     - fromFieldPath: spec.parameters.kubernetesProviderConfigName
       toFieldPath: spec.providerConfigRef.name
-    readinessChecks:
-    - type: None
   - name: ingress
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha1

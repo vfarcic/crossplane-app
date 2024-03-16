@@ -1,0 +1,208 @@
+---
+apiVersion: devopstoolkitseries.com/v1alpha1
+kind: AppClaim
+metadata:
+  name: silly-demo
+  namespace: ($namespace)
+spec:
+  compositionRef:
+    name: app-backend-db
+  compositionSelector:
+    matchLabels:
+      location: local
+      type: backend-db
+  id: backend-db
+  parameters:
+    host: silly-demo.54.204.223.4.nip.io
+    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    kubernetesProviderConfigName: default
+    namespace: production
+    port: 8080
+  resourceRef:
+    apiVersion: devopstoolkitseries.com/v1alpha1
+    kind: App
+---
+apiVersion: devopstoolkitseries.com/v1alpha1
+kind: App
+metadata:
+  labels:
+    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-namespace: ($namespace)
+spec:
+  claimRef:
+    apiVersion: devopstoolkitseries.com/v1alpha1
+    kind: AppClaim
+    name: silly-demo
+    namespace: ($namespace)
+  compositionRef:
+    name: app-backend-db
+  compositionSelector:
+    matchLabels:
+      location: local
+      type: backend-db
+  id: backend-db
+  parameters:
+    host: silly-demo.54.204.223.4.nip.io
+    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    kubernetesProviderConfigName: default
+    namespace: production
+    port: 8080
+  resourceRefs:
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: ProviderConfig
+    name: backend-db
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: Object
+    name: backend-db-deployment
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: Object
+    name: backend-db-service
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: Object
+    name: backend-db-ingress
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: deployment
+    crossplane.io/external-name: backend-db-deployment
+  labels:
+    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-namespace: ($namespace)
+  name: backend-db-deployment
+spec:
+  forProvider:
+    manifest:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          app: backend-db
+        name: backend-db
+        namespace: production
+      spec:
+        selector:
+          matchLabels:
+            app: backend-db
+        template:
+          metadata:
+            labels:
+              app: backend-db
+          spec:
+            containers:
+            - env:
+              - name: DB_ENDPOINT
+                valueFrom:
+                  secretKeyRef:
+                    key: endpoint
+                    name: backend-db
+              - name: DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    name: backend-db
+              - name: DB_PORT
+                valueFrom:
+                  secretKeyRef:
+                    key: port
+                    name: backend-db
+                    optional: true
+              - name: DB_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: username
+                    name: backend-db
+              - name: DB_NAME
+                value: backend-db
+              image: ghcr.io/vfarcic/silly-demo:1.4.113
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+              name: backend
+              ports:
+              - containerPort: 8080
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+              resources:
+                limits:
+                  cpu: 250m
+                  memory: 256Mi
+                requests:
+                  cpu: 125m
+                  memory: 128Mi
+  providerConfigRef:
+    name: backend-db
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: ingress
+    crossplane.io/external-name: backend-db-ingress
+  labels:
+    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-namespace: ($namespace)
+  name: backend-db-ingress
+spec:
+  forProvider:
+    manifest:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          ingress.kubernetes.io/ssl-redirect: "false"
+        labels:
+          app: backend-db
+        name: backend-db
+        namespace: production
+      spec:
+        rules:
+        - host: silly-demo.54.204.223.4.nip.io
+          http:
+            paths:
+            - backend:
+                service:
+                  name: backend-db
+                  port:
+                    number: 8080
+              path: /
+              pathType: ImplementationSpecific
+  providerConfigRef:
+    name: backend-db
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: service
+    crossplane.io/external-name: backend-db-service
+  labels:
+    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-namespace: ($namespace)
+  name: backend-db-service
+spec:
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: backend-db
+        name: backend-db
+        namespace: production
+      spec:
+        ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+        selector:
+          app: backend-db
+        type: ClusterIP
+  providerConfigRef:
+    name: backend-db
+

@@ -1,10 +1,10 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: app-backend-db
+  name: app-backend-db-remote
   labels:
     type: backend-db
-    location: local
+    location: remote
 spec:
   compositeTypeRef:
     apiVersion: devopstoolkitseries.com/v1alpha1
@@ -14,16 +14,6 @@ spec:
     patches:
     - fromFieldPath: metadata.labels
   resources:
-  - name: kubernetes
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: ProviderConfig
-      spec:
-        credentials:
-          source: InjectedIdentity
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath: metadata.name
   - name: deployment
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -80,7 +70,7 @@ spec:
       transforms:
       - type: string
         string:
-          fmt: '%s-deployment'
+          fmt: "%s-deployment"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -99,17 +89,17 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].livenessProbe.httpGet.port
     - fromFieldPath: spec.parameters.port
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].readinessProbe.httpGet.port
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.dbSecret.name
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.dbSecret.name
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.dbSecret.name
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.dbSecret.name
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.dbSecret.name
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].env[4].value
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.kubernetesProviderConfigName
       toFieldPath: spec.providerConfigRef.name
   - name: service
     base:
@@ -133,7 +123,7 @@ spec:
       transforms:
       - type: string
         string:
-          fmt: '%s-service'
+          fmt: "%s-service"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -146,7 +136,7 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.ports[0].port
     - fromFieldPath: spec.parameters.port
       toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.kubernetesProviderConfigName
       toFieldPath: spec.providerConfigRef.name
   - name: ingress
     base:
@@ -159,7 +149,7 @@ spec:
             kind: Ingress
             metadata:
               annotations:
-                ingress.kubernetes.io/ssl-redirect: 'false'
+                ingress.kubernetes.io/ssl-redirect: "false"
             spec:
               rules:
               - http:
@@ -178,7 +168,7 @@ spec:
       transforms:
       - type: string
         string:
-          fmt: '%s-ingress'
+          fmt: "%s-ingress"
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -191,7 +181,7 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.name
     - fromFieldPath: spec.parameters.port
       toFieldPath: spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.port.number
-    - fromFieldPath: spec.id
+    - fromFieldPath: spec.parameters.kubernetesProviderConfigName
       toFieldPath: spec.providerConfigRef.name
     - type: ToCompositeFieldPath
       fromFieldPath: spec.forProvider.manifest.spec.rules[0].host

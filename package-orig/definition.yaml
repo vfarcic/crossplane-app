@@ -1,0 +1,83 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: apps.devopstoolkitseries.com
+spec:
+  defaultCompositionRef:
+    name: app-frontend
+  group: devopstoolkitseries.com
+  names:
+    kind: App
+    plural: apps
+  claimNames:
+    kind: AppClaim
+    plural: appclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID of this application that other objects will use to refer to it.
+              parameters:
+                type: object
+                properties:
+                  namespace:
+                    description: The namespace
+                    type: string
+                    default: production
+                  image:
+                    description: The container image of the application
+                    type: string
+                  port:
+                    description: The application port
+                    type: integer
+                    default: 80
+                  host:
+                    description: The host address of the application
+                    type: string
+                  dbSecret:
+                    type: object
+                    properties:
+                      name:
+                        description: The name of the Secret with DB authentication (used only with compositions with the label location=remote). This field is used only with the `app-backend-db*` Compositions.
+                        type: string
+                      namespace:
+                        description: The Namespace with the Secret with DB authentication (used only with compositions with the label location=remote).  This field is used only with the `app-backend-db*` Compositions.
+                        type: string
+                  db:
+                    type: object
+                    properties:
+                      version:
+                        description: The DB version depends on the DB type and versions available in the selected provider. This field is used only with the `app-backend-db-google` Composition.
+                        type: string
+                      size:
+                        description: Supported sizes are `small`, `medium`, and `large`. This field is used only with the Composition `app-backend-db-google`.
+                        type: string
+                        default: small
+                  kubernetesProviderConfigName:
+                    description: The name of the Kubernetes provider config (used only with compositions with the label location=remote).
+                    type: string
+                    default: default
+                required:
+                - image
+            required:
+            - id
+            - parameters
+          status:
+            type: object
+            properties:
+              host:
+                description: The host address of the application
+                type: string
+    additionalPrinterColumns:
+    - name: host
+      type: string
+      jsonPath: ".status.host"

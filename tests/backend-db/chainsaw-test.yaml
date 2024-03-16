@@ -1,0 +1,21 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: backend-db-remote
+spec:
+  template: true
+  steps:
+    - try:
+        - apply:
+            file: install.yaml
+        - assert:
+            file: assert-install.yaml
+      catch:
+        - get:
+            resource: managed
+        - describe:
+            resource: sqls
+            selector: crossplane.io/claim-namespace=$NAMESPACE
+        - describe:
+            resource: release
+            selector: crossplane.io/claim-namespace=$NAMESPACE

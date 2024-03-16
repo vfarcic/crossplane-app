@@ -1,0 +1,14 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: dot-application
+  annotations:
+    meta.crossplane.io/maintainer: Viktor Farcic (@vfarcic)
+    meta.crossplane.io/source: github.com/vfarcic/crossplane-app
+    meta.crossplane.io/license: MIT
+    meta.crossplane.io/description: Application types (frontend, backend, backend with a database, etc.)
+    meta.crossplane.io/readme: A Configuration package that defines application types like frontend, backend, backend with a database, etc.
+# spec:
+#   dependsOn:
+#     - configuration: xpkg.upbound.io/devops-toolkit/dot-sql
+#       version: ">=v0.8.5"

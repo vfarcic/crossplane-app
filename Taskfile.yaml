@@ -3,20 +3,19 @@ version: '3'
 tasks:
 
   # Package
-  # package-generate:
-    # desc: Generates package files.
-    # cmds:
-    #   - for: ["backend-db", "backend-db-remote"]
-    #     cmd: rm -f package/{{ .ITEM }}.yaml && kcl kcl/{{ .ITEM }}.k kcl/schema.k --output package/{{ .ITEM }}.yaml
+  package-generate:
+    desc: Generates package files.
+    cmds:
+      - cmd: rm -f package/all.yaml && kcl kcl/compositions.k --output package/all.yaml
   package-apply:
     desc: Applies Compositions and Composite Resource Definition.
     cmds:
       - cmd: kubectl apply --filename package/definition.yaml && sleep 1
       - for: [
+          "all.yaml",
           "backend-db-aws.yaml",
           "backend-db-google.yaml",
           "backend-db-local.yaml",
-          "backend-db-remote.yaml",
           "backend-db.yaml",
           "backend-remote.yaml",
           "backend.yaml",
@@ -25,8 +24,8 @@ tasks:
         cmd: kubectl apply --filename package/{{ .ITEM }}
   package-publish:
     desc: Builds and pushes the package.
-    # deps:
-    #   - package-generate
+    deps:
+      - package-generate
     cmds:
       - up login --token $UP_TOKEN
       - up xpkg build --package-root package --name sql.xpkg
@@ -43,21 +42,21 @@ tasks:
       - defer: { task: cluster-destroy }
   test-watch:
     desc: Runs tests assuming that the cluster is already created and everything is installed.
-    # deps:
-    #   - task: package-generate
+    deps:
+      - task: package-generate
     cmds:
       - task: package-apply
       - chainsaw test
     watch: true
     sources:
-      # - kcl/*.k
+      - kcl/*.k
       - tests/**/*.yaml
     generates:
       - package/*.yaml
   test-once:
     desc: Runs tests once assuming that the cluster is already created and everything is installed.
-    # deps:
-    #   - task: package-generate
+    deps:
+      - task: package-generate
     cmds:
       - task: package-apply
       - chainsaw test
@@ -70,7 +69,7 @@ tasks:
       PROVIDERS:
         sh: ls -1 providers | grep -v config
     deps:
-      # - package-generate
+      - package-generate
       - cluster-create-kind
       - helm-repo
     cmds:

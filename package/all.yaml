@@ -70,7 +70,7 @@ spec:
       transforms:
       - type: string
         string:
-          fmt: "%s-deployment"
+          fmt: '%s-deployment'
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -113,9 +113,7 @@ spec:
             spec:
               type: ClusterIP
               ports:
-              - port: 80
-                targetPort: 80
-                protocol: TCP
+              - protocol: TCP
                 name: http
     patches:
     - fromFieldPath: spec.id
@@ -123,7 +121,7 @@ spec:
       transforms:
       - type: string
         string:
-          fmt: "%s-service"
+          fmt: '%s-service'
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -149,26 +147,20 @@ spec:
             kind: Ingress
             metadata:
               annotations:
-                ingress.kubernetes.io/ssl-redirect: "false"
+                ingress.kubernetes.io/ssl-redirect: 'false'
             spec:
               rules:
               - http:
                   paths:
                   - path: /
                     pathType: ImplementationSpecific
-                    backend:
-                      service:
-                        name: devops-toolkit
-                        port:
-                          number: 80
-                host: devopstoolkitseries.com
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
       transforms:
       - type: string
         string:
-          fmt: "%s-ingress"
+          fmt: '%s-ingress'
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace

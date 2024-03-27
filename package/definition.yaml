@@ -43,6 +43,7 @@ spec:
                   host:
                     description: The host address of the application
                     type: string
+                    default: "devopstoolkitseries.com"
                   dbSecret:
                     type: object
                     properties:

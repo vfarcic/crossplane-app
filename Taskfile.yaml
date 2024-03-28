@@ -6,19 +6,21 @@ tasks:
   package-generate:
     desc: Generates package files.
     cmds:
-      - cmd: rm -f package/all.yaml && kcl kcl/compositions.k --output package/all.yaml
+      - for: ["backend", "backend-db", "backend-db-remote"]
+        cmd: rm -f package/{{ .ITEM }}.yaml && kcl kcl/{{ .ITEM }}.k --output package/{{ .ITEM }}.yaml
   package-apply:
     desc: Applies Compositions and Composite Resource Definition.
     cmds:
       - cmd: kubectl apply --filename package/definition.yaml && sleep 1
       - for: [
-          "all.yaml",
+          "backend.yaml",
+          "backend-db.yaml",
+          "backend-db-remote.yaml",
           "backend-db-aws.yaml",
           "backend-db-google.yaml",
           "backend-db-local.yaml",
           "backend-db.yaml",
           "backend-remote.yaml",
-          "backend.yaml",
           "frontend.yaml"
         ]
         cmd: kubectl apply --filename package/{{ .ITEM }}

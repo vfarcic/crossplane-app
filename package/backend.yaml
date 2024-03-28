@@ -25,7 +25,7 @@ spec:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
     readinessChecks:
-      - type: None
+    - type: None
   - name: deployment
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -36,16 +36,17 @@ spec:
             apiVersion: apps/v1
             kind: Deployment
             spec:
+              selector: {}
               template:
                 spec:
                   containers:
-                  - name: backend
-                    ports:
-                    - containerPort: 80
-                    livenessProbe:
+                  - livenessProbe:
                       httpGet:
                         path: /
                         port: 80
+                    name: backend
+                    ports:
+                    - containerPort: 80
                     readinessProbe:
                       httpGet:
                         path: /
@@ -61,9 +62,9 @@ spec:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
       transforms:
-        - type: string
-          string:
-            fmt: "%s-deployment"
+      - type: string
+        string:
+          fmt: '%s-deployment'
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -84,8 +85,6 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].readinessProbe.httpGet.port
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name
-    readinessChecks:
-      - type: None
   - name: service
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -96,19 +95,18 @@ spec:
             apiVersion: v1
             kind: Service
             spec:
-              type: ClusterIP
               ports:
-              - port: 80
-                targetPort: 80
+              - name: http
+                port: 8008
                 protocol: TCP
-                name: http
+              type: ClusterIP
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
       transforms:
-        - type: string
-          string:
-            fmt: "%s-service"
+      - type: string
+        string:
+          fmt: '%s-service'
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -123,8 +121,6 @@ spec:
       toFieldPath: spec.forProvider.manifest.spec.ports[0].targetPort
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name
-    readinessChecks:
-      - type: None
   - name: ingress
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -136,26 +132,23 @@ spec:
             kind: Ingress
             metadata:
               annotations:
-                ingress.kubernetes.io/ssl-redirect: "false"
+                ingress.kubernetes.io/ssl-redirect: 'false'
             spec:
               rules:
               - http:
                   paths:
-                  - path: /
-                    pathType: ImplementationSpecific
-                    backend:
+                  - backend:
                       service:
-                        name: devops-toolkit
-                        port:
-                          number: 80
-                host: devopstoolkitseries.com
+                        name: acme
+                    path: /
+                    pathType: ImplementationSpecific
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
       transforms:
       - type: string
         string:
-          fmt: "%s-ingress"
+          fmt: '%s-ingress'
     - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.metadata.name
     - fromFieldPath: spec.parameters.namespace
@@ -173,5 +166,3 @@ spec:
     - type: ToCompositeFieldPath
       fromFieldPath: spec.forProvider.manifest.spec.rules[0].host
       toFieldPath: status.host
-    readinessChecks:
-    - type: None

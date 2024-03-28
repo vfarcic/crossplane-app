@@ -24,28 +24,11 @@ spec:
             apiVersion: apps/v1
             kind: Deployment
             spec:
+              selector: {}
               template:
                 spec:
                   containers:
-                  - name: backend
-                    ports:
-                    - containerPort: 80
-                    livenessProbe:
-                      httpGet:
-                        path: /
-                        port: 80
-                    readinessProbe:
-                      httpGet:
-                        path: /
-                        port: 80
-                    resources:
-                      limits:
-                        cpu: 250m
-                        memory: 256Mi
-                      requests:
-                        cpu: 125m
-                        memory: 128Mi
-                    env:
+                  - env:
                     - name: DB_ENDPOINT
                       valueFrom:
                         secretKeyRef:
@@ -64,6 +47,24 @@ spec:
                         secretKeyRef:
                           key: username
                     - name: DB_NAME
+                    livenessProbe:
+                      httpGet:
+                        path: /
+                        port: 80
+                    name: backend
+                    ports:
+                    - containerPort: 80
+                    readinessProbe:
+                      httpGet:
+                        path: /
+                        port: 80
+                    resources:
+                      limits:
+                        cpu: 250m
+                        memory: 256Mi
+                      requests:
+                        cpu: 125m
+                        memory: 128Mi
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -111,10 +112,11 @@ spec:
             apiVersion: v1
             kind: Service
             spec:
-              type: ClusterIP
               ports:
-              - protocol: TCP
-                name: http
+              - name: http
+                port: 8008
+                protocol: TCP
+              type: ClusterIP
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -152,7 +154,10 @@ spec:
               rules:
               - http:
                   paths:
-                  - path: /
+                  - backend:
+                      service:
+                        name: acme
+                    path: /
                     pathType: ImplementationSpecific
     patches:
     - fromFieldPath: spec.id

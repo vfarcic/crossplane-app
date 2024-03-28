@@ -1,16 +1,16 @@
 import .common
+import k8s.api.core.v1 as k8core
 
 schema Service:
+  _providerConfigName: str = "spec.id"
   name = "service"
   base = common.KubernetesObjectBase {
     spec = common.KubernetesObjectSpec {
       forProvider = common.KubernetesObjectForProvider {
-        manifest = {
-          apiVersion = "v1"
-          kind = "Service"
-          spec = {
+        manifest = k8core.Service {
+          spec: {
             type = "ClusterIP"
-            ports = [{ protocol = "TCP", name = "http" }]
+            ports = [{ port = 8008, protocol = "TCP", name = "http" }]
           }
         }
       }
@@ -21,12 +21,12 @@ schema Service:
       fromFieldPath = "spec.id"
       toFieldPath = "metadata.name"
       transforms = [{ type = "string", string = { fmt = "%s-service" } }]
-    },
-    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.name" },
-    { fromFieldPath = "spec.parameters.namespace", toFieldPath = "spec.forProvider.manifest.metadata.namespace" },
-    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.labels.app" },
-    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.spec.selector.app" },
-    { fromFieldPath = "spec.parameters.port", toFieldPath = "spec.forProvider.manifest.spec.ports[0].port" }, 
-    { fromFieldPath = "spec.parameters.port", toFieldPath = "spec.forProvider.manifest.spec.ports[0].targetPort" }, 
-    { fromFieldPath = "spec.parameters.kubernetesProviderConfigName", toFieldPath = "spec.providerConfigRef.name" }
+    }
+    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.name" }
+    { fromFieldPath = "spec.parameters.namespace", toFieldPath = "spec.forProvider.manifest.metadata.namespace" }
+    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.labels.app" }
+    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.spec.selector.app" }
+    { fromFieldPath = "spec.parameters.port", toFieldPath = "spec.forProvider.manifest.spec.ports[0].port" }
+    { fromFieldPath = "spec.parameters.port", toFieldPath = "spec.forProvider.manifest.spec.ports[0].targetPort" }
+    { fromFieldPath = _providerConfigName, toFieldPath = "spec.providerConfigRef.name" }
   ]

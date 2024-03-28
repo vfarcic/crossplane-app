@@ -1,7 +1,7 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: backend-db
+  name: backend
 spec:
   template: true
   steps:
@@ -14,7 +14,7 @@ spec:
       #   - get:
       #       resource: managed
       #   - describe:
-      #       resource: sqls
+      #       resource: Deployment
       #       selector: crossplane.io/claim-namespace=$NAMESPACE
       #   - describe:
       #       resource: release

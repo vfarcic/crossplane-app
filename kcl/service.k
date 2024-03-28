@@ -1,32 +1,20 @@
 import .common
 import k8s.api.core.v1 as k8core
 
-schema Service:
-  _providerConfigName: str = "spec.id"
-  name = "service"
-  base = common.KubernetesObjectBase {
-    spec = common.KubernetesObjectSpec {
-      forProvider = common.KubernetesObjectForProvider {
-        manifest = k8core.Service {
-          spec: {
-            type = "ClusterIP"
-            ports = [{ port = 8008, protocol = "TCP", name = "http" }]
-          }
+schema Service(common.KubernetesObject):
+    _providerConfigName: str = "spec.id"
+    name = "service"
+    base = common.KubernetesObjectBase {
+        spec.forProvider.manifest = k8core.Service {
+            spec: {
+                type = "ClusterIP"
+                ports = [{port = 8008, protocol = "TCP", name = "http"}]
+            }
         }
-      }
     }
-  }
-  patches = [
-    {
-      fromFieldPath = "spec.id"
-      toFieldPath = "metadata.name"
-      transforms = [{ type = "string", string = { fmt = "%s-service" } }]
-    }
-    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.name" }
-    { fromFieldPath = "spec.parameters.namespace", toFieldPath = "spec.forProvider.manifest.metadata.namespace" }
-    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.labels.app" }
-    { fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.spec.selector.app" }
-    { fromFieldPath = "spec.parameters.port", toFieldPath = "spec.forProvider.manifest.spec.ports[0].port" }
-    { fromFieldPath = "spec.parameters.port", toFieldPath = "spec.forProvider.manifest.spec.ports[0].targetPort" }
-    { fromFieldPath = _providerConfigName, toFieldPath = "spec.providerConfigRef.name" }
-  ]
+    patches = common.Patches("service") + [
+        {fromFieldPath = "spec.id", toFieldPath = "{}.selector.app".format(common.ManifestSpec)}
+        {fromFieldPath = "spec.parameters.port", toFieldPath = "{}.ports[0].port".format(common.ManifestSpec)}
+        {fromFieldPath = "spec.parameters.port", toFieldPath = "{}.ports[0].targetPort".format(common.ManifestSpec)}
+        {fromFieldPath = _providerConfigName, toFieldPath = "spec.providerConfigRef.name"}
+    ]

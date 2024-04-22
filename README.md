@@ -1,13 +1,6 @@
-## Setup
+# Demo Manifests and Code Used in DevOps Toolkit Videos
 
-```bash
-# Install `gum` by following the instructions in
-#   https://github.com/charmbracelet/gum#installation
-# Watch https://youtu.be/U8zCHA-9VLA if you are not familiar with
-#   Charm Gum.
-
-chmod +x setup.sh
-
+[![Exploring KCL: Configuration and Data Structure Language; CUE and Pkl Replacement? ](https://img.youtube.com/vi/Gn6btuH3ULw/0.jpg)](https://youtu.be/Gn6btuH3ULw)
 ./setup.sh
 
 source .env

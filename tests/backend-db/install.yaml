@@ -1,15 +1,17 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo
+  name: silly-demo-backend-db
 spec:
   id: backend-db
   compositionSelector:
     matchLabels:
-      type: backend-db
+      type: backend
       location: local
   parameters:
     namespace: production
     image: ghcr.io/vfarcic/silly-demo:1.4.113
     port: 8080
     host: silly-demo.54.204.223.4.nip.io
+    db:
+      secret: my-db

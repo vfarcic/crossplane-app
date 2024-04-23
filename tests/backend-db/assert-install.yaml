@@ -2,15 +2,15 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo
+  name: silly-demo-backend-db
   namespace: ($namespace)
 spec:
   compositionRef:
-    name: app-backend-db
+    name: app-backend
   compositionSelector:
     matchLabels:
       location: local
-      type: backend-db
+      type: backend
   id: backend-db
   parameters:
     host: silly-demo.54.204.223.4.nip.io
@@ -18,6 +18,8 @@ spec:
     kubernetesProviderConfigName: default
     namespace: production
     port: 8080
+    db:
+      secret: my-db
   resourceRef:
     apiVersion: devopstoolkitseries.com/v1alpha1
     kind: App
@@ -26,20 +28,20 @@ apiVersion: devopstoolkitseries.com/v1alpha1
 kind: App
 metadata:
   labels:
-    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-name: silly-demo-backend-db
     crossplane.io/claim-namespace: ($namespace)
 spec:
   claimRef:
     apiVersion: devopstoolkitseries.com/v1alpha1
     kind: AppClaim
-    name: silly-demo
+    name: silly-demo-backend-db
     namespace: ($namespace)
   compositionRef:
-    name: app-backend-db
+    name: app-backend
   compositionSelector:
     matchLabels:
       location: local
-      type: backend-db
+      type: backend
   id: backend-db
   parameters:
     host: silly-demo.54.204.223.4.nip.io
@@ -47,28 +49,30 @@ spec:
     kubernetesProviderConfigName: default
     namespace: production
     port: 8080
+    db:
+      secret: my-db
   resourceRefs:
-  - apiVersion: kubernetes.crossplane.io/v1alpha1
-    kind: ProviderConfig
-    name: backend-db
   - apiVersion: kubernetes.crossplane.io/v1alpha1
     kind: Object
     name: backend-db-deployment
   - apiVersion: kubernetes.crossplane.io/v1alpha1
     kind: Object
-    name: backend-db-service
+    name: backend-db-ingress
   - apiVersion: kubernetes.crossplane.io/v1alpha1
     kind: Object
-    name: backend-db-ingress
+    name: backend-db-service
+  - apiVersion: kubernetes.crossplane.io/v1alpha1
+    kind: ProviderConfig
+    name: backend-db
 ---
 apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: Object
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: deployment
+    crossplane.io/composition-resource-name: backend-db-deployment
     crossplane.io/external-name: backend-db-deployment
   labels:
-    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-name: silly-demo-backend-db
     crossplane.io/claim-namespace: ($namespace)
   name: backend-db-deployment
 spec:
@@ -96,23 +100,23 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     key: endpoint
-                    name: backend-db
+                    name: my-db
               - name: DB_PASSWORD
                 valueFrom:
                   secretKeyRef:
                     key: password
-                    name: backend-db
+                    name: my-db
               - name: DB_PORT
                 valueFrom:
                   secretKeyRef:
                     key: port
-                    name: backend-db
+                    name: my-db
                     optional: true
               - name: DB_USERNAME
                 valueFrom:
                   secretKeyRef:
                     key: username
-                    name: backend-db
+                    name: my-db
               - name: DB_NAME
                 value: backend-db
               image: ghcr.io/vfarcic/silly-demo:1.4.113
@@ -141,10 +145,10 @@ apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: Object
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: ingress
+    crossplane.io/composition-resource-name: backend-db-ingress
     crossplane.io/external-name: backend-db-ingress
   labels:
-    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-name: silly-demo-backend-db
     crossplane.io/claim-namespace: ($namespace)
   name: backend-db-ingress
 spec:
@@ -178,10 +182,10 @@ apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: Object
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: service
+    crossplane.io/composition-resource-name: backend-db-service
     crossplane.io/external-name: backend-db-service
   labels:
-    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-name: silly-demo-backend-db
     crossplane.io/claim-namespace: ($namespace)
   name: backend-db-service
 spec:

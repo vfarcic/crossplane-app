@@ -10,12 +10,11 @@ spec:
             file: install.yaml
         - assert:
             file: assert-install.yaml
-      # catch:
-      #   - get:
-      #       resource: managed
-      #   - describe:
-      #       resource: Deployment
-      #       selector: crossplane.io/claim-namespace=$NAMESPACE
-      #   - describe:
-      #       resource: release
-      #       selector: crossplane.io/claim-namespace=$NAMESPACE
+      catch:
+        - get:
+            resource: apps
+        - get:
+            resource: managed
+        - describe:
+            resource: app
+            selector: crossplane.io/claim-namespace=$NAMESPACE

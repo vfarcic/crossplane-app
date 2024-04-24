@@ -193,6 +193,54 @@
         }
       }
     },
+    "kcl-cli@0.8.6": {
+      "last_modified": "2024-04-20T11:41:51-04:00",
+      "resolved": "github:NixOS/nixpkgs/0c97ced70e0b92d46e5e53e239fec5201f8b0811#kcl-cli",
+      "source": "devbox-search",
+      "version": "0.8.6",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/j3awbwk313a5njbv11p7i5k1kc3sf5rb-kcl-cli-0.8.6",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/j3awbwk313a5njbv11p7i5k1kc3sf5rb-kcl-cli-0.8.6"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/17hywb5v7sycjxwlr27rnk33df395y6v-kcl-cli-0.8.6",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/17hywb5v7sycjxwlr27rnk33df395y6v-kcl-cli-0.8.6"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/64x7k9gwwdlppsspy71id49knxclbxz1-kcl-cli-0.8.6",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/64x7k9gwwdlppsspy71id49knxclbxz1-kcl-cli-0.8.6"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rbrymc26lny791fsw1jakpi23jnnscc1-kcl-cli-0.8.6",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/rbrymc26lny791fsw1jakpi23jnnscc1-kcl-cli-0.8.6"
+        }
+      }
+    },
     "kind@0.22.0": {
       "last_modified": "2024-03-08T13:51:52Z",
       "resolved": "github:NixOS/nixpkgs/a343533bccc62400e8a9560423486a3b6c11a23b#kind",

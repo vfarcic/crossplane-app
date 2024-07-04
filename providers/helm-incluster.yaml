@@ -1,5 +1,4 @@
 ---
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -7,9 +6,7 @@ metadata:
   namespace: crossplane-system
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
-
 ---
-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -24,9 +21,7 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
-
 ---
-
 apiVersion: pkg.crossplane.io/v1alpha1
 kind: ControllerConfig
 metadata:
@@ -35,9 +30,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   serviceAccountName: crossplane-provider-helm
-
 ---
-
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:

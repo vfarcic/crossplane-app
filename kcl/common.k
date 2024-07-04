@@ -22,7 +22,7 @@ schema Spec:
     pipeline = [
         {
             step = "kcl"
-            functionRef.name = "kcl-function"
+            functionRef.name = "crossplane-contrib-function-kcl"
             input = {
                 apiVersion = "krm.kcl.dev/v1alpha1"
                 kind = "KCLRun"

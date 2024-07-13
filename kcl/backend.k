@@ -34,7 +34,6 @@ items = [
                     namespace = oxr.spec.parameters.namespace
                     labels = {
                         "app.kubernetes.io/name" = oxr.spec.id
-                        "backstage.io/kubernetes-id" = oxr.spec.id
                     }
                 }
                 spec = {
@@ -44,7 +43,6 @@ items = [
                     template = {
                         metadata.labels = {
                             "app.kubernetes.io/name" = oxr.spec.id
-                            "backstage.io/kubernetes-id" = oxr.spec.id
                         }
                         spec = {
                             containers = [{
@@ -122,7 +120,6 @@ items = [
                     namespace = oxr.spec.parameters.namespace
                     labels = {
                         "app.kubernetes.io/name" = oxr.spec.id
-                        "backstage.io/kubernetes-id" = oxr.spec.id
                     }
                 }
                 spec = {
@@ -153,7 +150,6 @@ items = [
                     namespace = oxr.spec.parameters.namespace
                     labels = {
                         "app.kubernetes.io/name" = oxr.spec.id
-                        "backstage.io/kubernetes-id" = oxr.spec.id
                     }
                     annotations = {"ingress.kubernetes.io/ssl-redirect" = "false" }
                 }

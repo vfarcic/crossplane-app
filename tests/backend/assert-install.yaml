@@ -79,7 +79,6 @@ spec:
       metadata:
         labels:
           app.kubernetes.io/name: backend
-          backstage.io/kubernetes-id: backend
         name: backend
         namespace: production
       spec:
@@ -90,7 +89,6 @@ spec:
           metadata:
             labels:
               app.kubernetes.io/name: backend
-              backstage.io/kubernetes-id: backend
           spec:
             containers:
             - image: ghcr.io/vfarcic/silly-demo:1.4.113
@@ -135,7 +133,6 @@ spec:
           ingress.kubernetes.io/ssl-redirect: "false"
         labels:
           app.kubernetes.io/name: backend
-          backstage.io/kubernetes-id: backend
         name: backend
         namespace: production
       spec:
@@ -171,7 +168,6 @@ spec:
       metadata:
         labels:
           app.kubernetes.io/name: backend
-          backstage.io/kubernetes-id: backend
         name: backend
         namespace: production
       spec:

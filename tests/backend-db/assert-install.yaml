@@ -83,7 +83,6 @@ spec:
       metadata:
         labels:
           app.kubernetes.io/name: backend-db
-          backstage.io/kubernetes-id: backend-db
         name: backend-db
         namespace: production
       spec:
@@ -94,7 +93,6 @@ spec:
           metadata:
             labels:
               app.kubernetes.io/name: backend-db
-              backstage.io/kubernetes-id: backend-db
           spec:
             containers:
             - env:
@@ -163,7 +161,6 @@ spec:
           ingress.kubernetes.io/ssl-redirect: "false"
         labels:
           app.kubernetes.io/name: backend-db
-          backstage.io/kubernetes-id: backend-db
         name: backend-db
         namespace: production
       spec:
@@ -199,7 +196,6 @@ spec:
       metadata:
         labels:
           app.kubernetes.io/name: backend-db
-          backstage.io/kubernetes-id: backend-db
         name: backend-db
         namespace: production
       spec:

@@ -82,17 +82,19 @@ spec:
       kind: Deployment
       metadata:
         labels:
-          app: backend-db
+          app.kubernetes.io/name: backend-db
+          backstage.io/kubernetes-id: backend-db
         name: backend-db
         namespace: production
       spec:
         selector:
           matchLabels:
-            app: backend-db
+            app.kubernetes.io/name: backend-db
         template:
           metadata:
             labels:
-              app: backend-db
+              app.kubernetes.io/name: backend-db
+              backstage.io/kubernetes-id: backend-db
           spec:
             containers:
             - env:
@@ -160,7 +162,8 @@ spec:
         annotations:
           ingress.kubernetes.io/ssl-redirect: "false"
         labels:
-          app: backend-db
+          app.kubernetes.io/name: backend-db
+          backstage.io/kubernetes-id: backend-db
         name: backend-db
         namespace: production
       spec:
@@ -195,7 +198,8 @@ spec:
       kind: Service
       metadata:
         labels:
-          app: backend-db
+          app.kubernetes.io/name: backend-db
+          backstage.io/kubernetes-id: backend-db
         name: backend-db
         namespace: production
       spec:
@@ -205,7 +209,7 @@ spec:
           protocol: TCP
           targetPort: 8080
         selector:
-          app: backend-db
+          app.kubernetes.io/name: backend-db
         type: ClusterIP
   providerConfigRef:
     name: backend-db

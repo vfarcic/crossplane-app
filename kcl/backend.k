@@ -32,12 +32,20 @@ items = [
                 metadata = {
                     name = oxr.spec.id
                     namespace = oxr.spec.parameters.namespace
-                    labels.app = oxr.spec.id
+                    labels = {
+                        "app.kubernetes.io/name" = oxr.spec.id
+                        "backstage.io/kubernetes-id" = oxr.spec.id
+                    }
                 }
                 spec = {
-                    selector.matchLabels.app = oxr.spec.id
+                    selector.matchLabels = {
+                        "app.kubernetes.io/name" = oxr.spec.id
+                    }
                     template = {
-                        metadata.labels.app = oxr.spec.id
+                        metadata.labels = {
+                            "app.kubernetes.io/name" = oxr.spec.id
+                            "backstage.io/kubernetes-id" = oxr.spec.id
+                        }
                         spec = {
                             containers = [{
                                 image = oxr.spec.parameters.image
@@ -112,7 +120,10 @@ items = [
                 metadata = {
                     name = oxr.spec.id
                     namespace = oxr.spec.parameters.namespace
-                    labels.app = oxr.spec.id
+                    labels = {
+                        "app.kubernetes.io/name" = oxr.spec.id
+                        "backstage.io/kubernetes-id" = oxr.spec.id
+                    }
                 }
                 spec = {
                     type = "ClusterIP"
@@ -122,7 +133,9 @@ items = [
                         protocol = "TCP"
                         name = "http"
                     }]
-                    selector.app = oxr.spec.id
+                    selector = {
+                        "app.kubernetes.io/name" = oxr.spec.id
+                    }
                 }
             }
             providerConfigRef.name = oxr.spec.id
@@ -138,7 +151,10 @@ items = [
                 metadata = {
                     name = oxr.spec.id
                     namespace = oxr.spec.parameters.namespace
-                    labels.app = oxr.spec.id
+                    labels = {
+                        "app.kubernetes.io/name" = oxr.spec.id
+                        "backstage.io/kubernetes-id" = oxr.spec.id
+                    }
                     annotations = {"ingress.kubernetes.io/ssl-redirect" = "false" }
                 }
                 spec.rules = [{

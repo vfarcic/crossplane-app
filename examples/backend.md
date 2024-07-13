@@ -10,6 +10,8 @@ helm upgrade --install crossplane crossplane \
     --namespace crossplane-system --create-namespace --wait
 
 kubectl apply --filename config.yaml
+
+kubectl apply --filename providers/kubernetes-incluster.yaml
 ```
 
 TODO: Add the rest of the setup

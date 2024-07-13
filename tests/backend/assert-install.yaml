@@ -78,17 +78,19 @@ spec:
       kind: Deployment
       metadata:
         labels:
-          app: backend
+          app.kubernetes.io/name: backend
+          backstage.io/kubernetes-id: backend
         name: backend
         namespace: production
       spec:
         selector:
           matchLabels:
-            app: backend
+            app.kubernetes.io/name: backend
         template:
           metadata:
             labels:
-              app: backend
+              app.kubernetes.io/name: backend
+              backstage.io/kubernetes-id: backend
           spec:
             containers:
             - image: ghcr.io/vfarcic/silly-demo:1.4.113
@@ -132,7 +134,8 @@ spec:
         annotations:
           ingress.kubernetes.io/ssl-redirect: "false"
         labels:
-          app: backend
+          app.kubernetes.io/name: backend
+          backstage.io/kubernetes-id: backend
         name: backend
         namespace: production
       spec:
@@ -167,7 +170,8 @@ spec:
       kind: Service
       metadata:
         labels:
-          app: backend
+          app.kubernetes.io/name: backend
+          backstage.io/kubernetes-id: backend
         name: backend
         namespace: production
       spec:
@@ -177,7 +181,7 @@ spec:
           protocol: TCP
           targetPort: 8080
         selector:
-          app: backend
+          app.kubernetes.io/name: backend
         type: ClusterIP
   providerConfigRef:
     name: backend

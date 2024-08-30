@@ -24,7 +24,7 @@ items = [
     } , {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-deployment".format(oxr.spec.id)        
+        metadata.name = "{}-deployment".format(oxr.spec.id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "apps/v1"
@@ -110,7 +110,7 @@ items = [
     }, {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-service".format(oxr.spec.id)        
+        metadata.name = "{}-service".format(oxr.spec.id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "v1"
@@ -140,7 +140,7 @@ items = [
     }, {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-ingress".format(oxr.spec.id)        
+        metadata.name = "{}-ingress".format(oxr.spec.id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "networking.k8s.io/v1"

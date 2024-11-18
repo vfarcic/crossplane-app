@@ -564,6 +564,54 @@
           "store_path": "/nix/store/2hvxd54xq7g2g6xp8xcmc1yi0582ifjg-yq-go-4.41.1"
         }
       }
+    },
+    "zellij@0.41.1": {
+      "last_modified": "2024-11-16T04:25:12Z",
+      "resolved": "github:NixOS/nixpkgs/34a626458d686f1b58139620a8b2793e9e123bba#zellij",
+      "source": "devbox-search",
+      "version": "0.41.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6mcybwavm3gxhrdbiw70lnjgxfd8pfic-zellij-0.41.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/6mcybwavm3gxhrdbiw70lnjgxfd8pfic-zellij-0.41.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6pzg9aw9gnyjvp87dqqfni0drhih5ryr-zellij-0.41.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/6pzg9aw9gnyjvp87dqqfni0drhih5ryr-zellij-0.41.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ff1hkc91rygblwhxa5s9xjrh6m588il5-zellij-0.41.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/ff1hkc91rygblwhxa5s9xjrh6m588il5-zellij-0.41.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/mrjx2iw8yzllpnvji5m729z8dj1lq4gv-zellij-0.41.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/mrjx2iw8yzllpnvji5m729z8dj1lq4gv-zellij-0.41.1"
+        }
+      }
     }
   }
 }

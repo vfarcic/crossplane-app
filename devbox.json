@@ -10,7 +10,8 @@
     "kubernetes-helm@3.14.1",
     "kyverno-chainsaw@0.1.7",
     "crossplane-cli@1.15.2",
-    "kcl-cli@0.8.9"
+    "kcl-cli@0.8.9",
+    "zellij@0.41.1"
   ],
   "shell": {
     "init_hook": [],

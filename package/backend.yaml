@@ -25,7 +25,168 @@ spec:
         name: kubernetes
       spec:
         target: Resources
-        source: "oxr = option(\"params\").oxr\ndxr = {\n    **oxr\n    status.host = oxr.spec.parameters.host\n}\nitems = [\n    {\n        apiVersion = \"kubernetes.crossplane.io/v1alpha1\"\n        kind = \"ProviderConfig\"\n        metadata.name = oxr.spec.id\n        spec.credentials.source = \"InjectedIdentity\"\n    } , {\n        apiVersion = \"kubernetes.crossplane.io/v1alpha1\"\n        kind = \"Object\"\n        metadata.name = \"{}-deployment\".format(oxr.spec.id)        \n        spec = {\n            forProvider.manifest = {\n                apiVersion = \"apps/v1\"\n                kind = \"Deployment\"\n                metadata = {\n                    name = oxr.spec.id\n                    namespace = oxr.spec.parameters.namespace\n                    labels = {\n                        \"app.kubernetes.io/name\" = oxr.spec.id\n                        \"backstage.io/kubernetes-id\" = oxr.spec.id\n                    }\n                }\n                spec = {\n                    selector.matchLabels = {\n                        \"app.kubernetes.io/name\" = oxr.spec.id\n                    }\n                    template = {\n                        metadata.labels = {\n                            \"app.kubernetes.io/name\" = oxr.spec.id\n                            \"backstage.io/kubernetes-id\" = oxr.spec.id\n                        }\n                        spec = {\n                            containers = [{\n                                image = oxr.spec.parameters.image\n                                name = \"backend\"\n                                ports = [{containerPort = 80 }]\n                                livenessProbe = {\n                                    httpGet = {\n                                        path = \"/\"\n                                        port = oxr.spec.parameters.port\n                                    }\n                                }\n                                readinessProbe = {\n                                    httpGet = {\n                                        path = \"/\"\n                                        port = oxr.spec.parameters.port\n                                    }\n                                }\n                                resources = {\n                                    limits = {cpu = \"250m\", memory = \"256Mi\" }\n                                    requests = {cpu = \"125m\", memory = \"128Mi\" }\n                                }\n                                ports = [\n                                    {containerPort = oxr.spec.parameters.port }\n                                ]\n                                if oxr.spec.parameters?.db?.secret:\n                                    env = [\n                                        {\n                                            name = \"DB_ENDPOINT\"\n                                            valueFrom.secretKeyRef = {\n                                                key = \"endpoint\"\n                                                name = oxr.spec.parameters.db.secret\n                                            }\n                                        }, {\n                                            name = \"DB_PASSWORD\"\n                                            valueFrom.secretKeyRef = {\n                                                key = \"password\"\n                                                name = oxr.spec.parameters.db.secret\n                                            }\n                                        }, {\n                                            name = \"DB_PORT\"\n                                            valueFrom.secretKeyRef = {\n                                                key = \"port\"\n                                                name = oxr.spec.parameters.db.secret\n                                                optional = True\n                                            }\n                                        }, {\n                                            name = \"DB_USERNAME\"\n                                            valueFrom.secretKeyRef = {\n                                                key = \"username\"\n                                                name = oxr.spec.parameters.db.secret\n                                            }\n                                        }, {\n                                            name = \"DB_NAME\"\n                                            value = oxr.spec.id\n                                        },\n                                    ]\n                            }]\n                        }\n                    }\n                }\n            }\n            providerConfigRef.name = oxr.spec.id\n        }\n    }, {\n        apiVersion = \"kubernetes.crossplane.io/v1alpha1\"\n        kind = \"Object\"\n        metadata.name = \"{}-service\".format(oxr.spec.id)        \n        spec = {\n            forProvider.manifest = {\n                apiVersion = \"v1\"\n                kind = \"Service\"\n                metadata = {\n                    name = oxr.spec.id\n                    namespace = oxr.spec.parameters.namespace\n                    labels = {\n                        \"app.kubernetes.io/name\" = oxr.spec.id\n                        \"backstage.io/kubernetes-id\" = oxr.spec.id\n                    }\n                }\n                spec = {\n                    type = \"ClusterIP\"\n                    ports = [{\n                        port = oxr.spec.parameters.port\n                        targetPort = oxr.spec.parameters.port\n                        protocol = \"TCP\"\n                        name = \"http\"\n                    }]\n                    selector = {\n                        \"app.kubernetes.io/name\" = oxr.spec.id\n                    }\n                }\n            }\n            providerConfigRef.name = oxr.spec.id\n        }\n    }, {\n        apiVersion = \"kubernetes.crossplane.io/v1alpha1\"\n        kind = \"Object\"\n        metadata.name = \"{}-ingress\".format(oxr.spec.id)        \n        spec = {\n            forProvider.manifest = {\n                apiVersion = \"networking.k8s.io/v1\"\n                kind = \"Ingress\"\n                metadata = {\n                    name = oxr.spec.id\n                    namespace = oxr.spec.parameters.namespace\n                    labels = {\n                        \"app.kubernetes.io/name\" = oxr.spec.id\n                        \"backstage.io/kubernetes-id\" = oxr.spec.id\n                    }\n                    annotations = {\"ingress.kubernetes.io/ssl-redirect\" = \"false\" }\n                }\n                spec.rules = [{\n                    host = oxr.spec.parameters.host\n                    http = {\n                        paths = [{\n                            path = \"/\"\n                            pathType = \"ImplementationSpecific\"\n                            backend.service = {\n                                name = oxr.spec.id\n                                port.number = oxr.spec.parameters.port\n                            }\n                        }]\n                    }\n                }]\n            }\n            providerConfigRef.name = oxr.spec.id\n        }\n    }\n]\n"
+        source: |
+          oxr = option("params").oxr
+          dxr = {
+              **oxr
+              status.host = oxr.spec.parameters.host
+          }
+          items = [
+              {
+                  apiVersion = "kubernetes.crossplane.io/v1alpha1"
+                  kind = "ProviderConfig"
+                  metadata.name = oxr.spec.id
+                  spec.credentials.source = "InjectedIdentity"
+              } , {
+                  apiVersion = "kubernetes.crossplane.io/v1alpha1"
+                  kind = "Object"
+                  metadata.name = "{}-deployment".format(oxr.spec.id)
+                  spec = {
+                      forProvider.manifest = {
+                          apiVersion = "apps/v1"
+                          kind = "Deployment"
+                          metadata = {
+                              name = oxr.spec.id
+                              namespace = oxr.spec.parameters.namespace
+                              labels = {
+                                  "app.kubernetes.io/name" = oxr.spec.id
+                              }
+                          }
+                          spec = {
+                              selector.matchLabels = {
+                                  "app.kubernetes.io/name" = oxr.spec.id
+                              }
+                              template = {
+                                  metadata.labels = {
+                                      "app.kubernetes.io/name" = oxr.spec.id
+                                  }
+                                  spec = {
+                                      containers = [{
+                                          image = oxr.spec.parameters.image
+                                          name = "backend"
+                                          ports = [{containerPort = 80 }]
+                                          livenessProbe = {
+                                              httpGet = {
+                                                  path = "/"
+                                                  port = oxr.spec.parameters.port
+                                              }
+                                          }
+                                          readinessProbe = {
+                                              httpGet = {
+                                                  path = "/"
+                                                  port = oxr.spec.parameters.port
+                                              }
+                                          }
+                                          resources = {
+                                              limits = {cpu = "250m", memory = "256Mi" }
+                                              requests = {cpu = "125m", memory = "128Mi" }
+                                          }
+                                          ports = [
+                                              {containerPort = oxr.spec.parameters.port }
+                                          ]
+                                          if oxr.spec.parameters?.db?.secret:
+                                              env = [
+                                                  {
+                                                      name = "DB_ENDPOINT"
+                                                      valueFrom.secretKeyRef = {
+                                                          key = "endpoint"
+                                                          name = oxr.spec.parameters.db.secret
+                                                      }
+                                                  }, {
+                                                      name = "DB_PASSWORD"
+                                                      valueFrom.secretKeyRef = {
+                                                          key = "password"
+                                                          name = oxr.spec.parameters.db.secret
+                                                      }
+                                                  }, {
+                                                      name = "DB_PORT"
+                                                      valueFrom.secretKeyRef = {
+                                                          key = "port"
+                                                          name = oxr.spec.parameters.db.secret
+                                                          optional = True
+                                                      }
+                                                  }, {
+                                                      name = "DB_USERNAME"
+                                                      valueFrom.secretKeyRef = {
+                                                          key = "username"
+                                                          name = oxr.spec.parameters.db.secret
+                                                      }
+                                                  }, {
+                                                      name = "DB_NAME"
+                                                      value = oxr.spec.id
+                                                  },
+                                              ]
+                                      }]
+                                  }
+                              }
+                          }
+                      }
+                      providerConfigRef.name = oxr.spec.id
+                  }
+              }, {
+                  apiVersion = "kubernetes.crossplane.io/v1alpha1"
+                  kind = "Object"
+                  metadata.name = "{}-service".format(oxr.spec.id)
+                  spec = {
+                      forProvider.manifest = {
+                          apiVersion = "v1"
+                          kind = "Service"
+                          metadata = {
+                              name = oxr.spec.id
+                              namespace = oxr.spec.parameters.namespace
+                              labels = {
+                                  "app.kubernetes.io/name" = oxr.spec.id
+                              }
+                          }
+                          spec = {
+                              type = "ClusterIP"
+                              ports = [{
+                                  port = oxr.spec.parameters.port
+                                  targetPort = oxr.spec.parameters.port
+                                  protocol = "TCP"
+                                  name = "http"
+                              }]
+                              selector = {
+                                  "app.kubernetes.io/name" = oxr.spec.id
+                              }
+                          }
+                      }
+                      providerConfigRef.name = oxr.spec.id
+                  }
+              }, {
+                  apiVersion = "kubernetes.crossplane.io/v1alpha1"
+                  kind = "Object"
+                  metadata.name = "{}-ingress".format(oxr.spec.id)
+                  spec = {
+                      forProvider.manifest = {
+                          apiVersion = "networking.k8s.io/v1"
+                          kind = "Ingress"
+                          metadata = {
+                              name = oxr.spec.id
+                              namespace = oxr.spec.parameters.namespace
+                              labels = {
+                                  "app.kubernetes.io/name" = oxr.spec.id
+                              }
+                              annotations = {"ingress.kubernetes.io/ssl-redirect" = "false" }
+                          }
+                          spec.rules = [{
+                              host = oxr.spec.parameters.host
+                              http = {
+                                  paths = [{
+                                      path = "/"
+                                      pathType = "ImplementationSpecific"
+                                      backend.service = {
+                                          name = oxr.spec.id
+                                          port.number = oxr.spec.parameters.port
+                                      }
+                                  }]
+                              }
+                          }]
+                      }
+                      providerConfigRef.name = oxr.spec.id
+                  }
+              }
+          ]
   - step: automatically-detect-ready-composed-resources
     functionRef:
       name: crossplane-contrib-function-auto-ready

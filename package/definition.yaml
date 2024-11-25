@@ -43,7 +43,7 @@ spec:
                   host:
                     description: The host address of the application
                     type: string
-                    default: "devopstoolkitseries.com"
+                    default: devopstoolkit.live
                   db:
                     type: object
                     properties:

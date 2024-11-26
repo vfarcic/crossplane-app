@@ -56,7 +56,7 @@ spec:
     name: Rename files
     input:
       files:
-      - from: manifests/manifest-template.yaml
+      - from: backstage/manifest-template.yaml
         to: manifests/app-claim-${{ parameters.name }}.yaml
   - id: create-pull-request
     action: publish:github:pull-request

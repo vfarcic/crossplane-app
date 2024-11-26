@@ -1,0 +1,73 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: crossplane-app
+  title: Crossplane App
+  description: Create and Manage Applications
+spec:
+  owner: vfarcic/crossplane-app
+  type: service
+  parameters:
+  - title: Service Definition
+    properties:
+      name:
+        type: string
+        ui:autofocus: true
+      namespace:
+        type: string
+        default: production
+      image:
+        type: string
+      port:
+        type: integer
+        default: 80
+      host:
+        type: string
+        default: devopstoolkit.live
+      db:
+        type: object
+        properties:
+          secret:
+            type: string
+    required:
+    - image
+  steps:
+  - id: log-message
+    name: Log Message
+    action: debug:log
+    input:
+      message: Created the manifest for the ${{ parameters.name }} application.
+  - id: fetch-template
+    action: fetch:template
+    name: Generate manifest
+    input:
+      url: manifest-templates
+      targetPath: manifests
+      values:
+        name: ${{ parameters.name }}
+        namespace: ${{ parameters.namespace }}
+        image: ${{ parameters.image }}
+        port: ${{ parameters.port }}
+        host: ${{ parameters.host }}
+        db:
+          secret: ${{ parameters.db.secret }}
+  - id: rename-manifest
+    action: fs:rename
+    name: Rename files
+    input:
+      files:
+      - from: manifests/manifest-template.yaml
+        to: manifests/app-claim-${{ parameters.name }}.yaml
+  - id: create-pull-request
+    action: publish:github:pull-request
+    name: Create a pull request
+    input:
+      repoUrl: github.com?repo=${{ parameters.repository }}&owner=${{ parameters.repositoryUser }}
+      branchName: cluster-${{ parameters.name }}
+      gitCommitMessage: Kubernetes cluster
+      title: App manifest ${{ parameters.name }}
+      description: This pull request creates the app-claim-${{ parameters.name }}.yaml application manifest.
+  output:
+    links:
+    - title: Pull Request
+      url: ${{ steps['create-pull-request'].output.remoteUrl }}

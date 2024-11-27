@@ -136,6 +136,7 @@ spec:
         name: backend
         namespace: production
       spec:
+        ingressClassName: traefik
         rules:
         - host: silly-demo.54.204.223.4.nip.io
           http:

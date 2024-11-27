@@ -169,19 +169,23 @@ spec:
                               }
                               annotations = {"ingress.kubernetes.io/ssl-redirect" = "false" }
                           }
-                          spec.rules = [{
-                              host = oxr.spec.parameters.host
-                              http = {
-                                  paths = [{
-                                      path = "/"
-                                      pathType = "ImplementationSpecific"
-                                      backend.service = {
-                                          name = oxr.spec.id
-                                          port.number = oxr.spec.parameters.port
-                                      }
-                                  }]
-                              }
-                          }]
+                          spec = {
+                              if oxr.spec.parameters?.ingressClassName:
+                                  ingressClassName = oxr.spec.parameters.ingressClassName
+                              rules = [{
+                                  host = oxr.spec.parameters.host
+                                  http = {
+                                      paths = [{
+                                          path = "/"
+                                          pathType = "ImplementationSpecific"
+                                          backend.service = {
+                                              name = oxr.spec.id
+                                              port.number = oxr.spec.parameters.port
+                                          }
+                                      }]
+                                  }
+                              }]
+                          }
                       }
                       providerConfigRef.name = oxr.spec.id
                   }

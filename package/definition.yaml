@@ -44,6 +44,9 @@ spec:
                     description: The host address of the application
                     type: string
                     default: devopstoolkit.live
+                  ingressClassName:
+                    description: The Ingress class name
+                    type: string
                   db:
                     type: object
                     properties:

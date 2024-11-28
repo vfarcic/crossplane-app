@@ -25,13 +25,13 @@ spec:
         name: kubernetes
       spec:
         target: Resources
-        source: |
+        source: |+
           oxr = option("params").oxr
           dxr = {
               **oxr
               status.host = oxr.spec.parameters.host
           }
-          items = [
+          _items = [
               {
                   apiVersion = "kubernetes.crossplane.io/v1alpha1"
                   kind = "ProviderConfig"
@@ -191,6 +191,58 @@ spec:
                   }
               }
           ]
+
+          if oxr.spec.parameters?.scaling?.enabled:
+              _items += [{
+                  apiVersion = "kubernetes.crossplane.io/v1alpha1"
+                  kind = "Object"
+                  metadata.name = "{}-hpa".format(oxr.spec.id)
+                  spec = {
+                      forProvider.manifest = {
+                          apiVersion = "autoscaling/v2"
+                          kind = "HorizontalPodAutoscaler"
+                          metadata = {
+                              name = oxr.spec.id
+                              namespace = oxr.spec.parameters.namespace
+                              labels = {
+                                  "app.kubernetes.io/name" = oxr.spec.id
+                              }
+                          }
+                          spec = {
+                              scaleTargetRef = {
+                                  apiVersion = "apps/v1"
+                                  kind = "Deployment"
+                                  name = oxr.spec.id
+                              }
+                              minReplicas = oxr.spec.parameters.scaling.min
+                              maxReplicas = oxr.spec.parameters.scaling.max
+                              metrics = [{
+                                  type = "Resource"
+                                  resource = {
+                                      name = "cpu"
+                                      target = {
+                                          type = "Utilization"
+                                          averageUtilization = 80
+                                      }
+                                  }
+                              }, {
+                                  type = "Resource"
+                                  resource = {
+                                      name = "memory"
+                                      target = {
+                                          type = "Utilization"
+                                          averageUtilization = 80
+                                      }
+                                  }
+                              }]
+                          }
+                      }
+                      providerConfigRef.name = oxr.spec.id
+                  }
+              }]
+
+          items = _items
+
   - step: automatically-detect-ready-composed-resources
     functionRef:
       name: crossplane-contrib-function-auto-ready

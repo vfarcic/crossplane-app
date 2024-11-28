@@ -10,6 +10,14 @@ spec:
             file: install.yaml
         - assert:
             file: assert-install.yaml
+        - patch:
+            file: hpa-default.yaml
+        - assert:
+            file: assert-hpa-default.yaml
+        - patch:
+            file: hpa.yaml
+        - assert:
+            file: assert-hpa.yaml
       # catch:
       #   - get:
       #       resource: apps

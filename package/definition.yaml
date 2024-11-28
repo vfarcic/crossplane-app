@@ -53,6 +53,21 @@ spec:
                       secret:
                         description: The name of the Secret with DB authentication.
                         type: string
+                  scaling:
+                    type: object
+                    properties:
+                      enabled:
+                        description: Whether to enable scaling
+                        type: boolean
+                        default: false
+                      min:
+                        description: Minimum number of replicas
+                        type: integer
+                        default: 1
+                      max:
+                        description: Maximum number of replicas
+                        type: integer
+                        default: 10
                   kubernetesProviderConfigName:
                     description: The name of the Kubernetes provider config (used only with compositions with the label location=remote).
                     type: string

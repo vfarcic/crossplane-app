@@ -1,0 +1,47 @@
+---
+apiVersion: devopstoolkitseries.com/v1alpha1
+kind: AppClaim
+metadata:
+  name: silly-demo-backend
+spec:
+  parameters:
+    scaling:
+      min: 2
+      max: 5
+---
+apiVersion: devopstoolkitseries.com/v1alpha1
+kind: App
+metadata:
+  labels:
+    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-namespace: ($namespace)
+spec:
+  parameters:
+    scaling:
+      min: 2
+      max: 5
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: backend-hpa
+    crossplane.io/external-name: backend-hpa
+  labels:
+    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-namespace: ($namespace)
+  name: backend-hpa
+spec:
+  forProvider:
+    manifest:
+      spec:
+        minReplicas: 2
+        maxReplicas: 5
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend
+spec:
+  minReplicas: 2
+  maxReplicas: 5

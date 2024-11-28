@@ -9,8 +9,5 @@ spec:
       type: backend
       location: local
   parameters:
-    namespace: ($namespace)
-    image: ghcr.io/vfarcic/silly-demo:1.4.113
-    port: 8080
-    host: silly-demo.54.204.223.4.nip.io
-    ingressClassName: traefik
+    scaling:
+      enabled: true

@@ -3,7 +3,6 @@ apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
   name: silly-demo-backend
-  namespace: ($namespace)
 spec:
   compositionRef:
     name: app-backend
@@ -16,7 +15,7 @@ spec:
     host: silly-demo.54.204.223.4.nip.io
     image: ghcr.io/vfarcic/silly-demo:1.4.113
     kubernetesProviderConfigName: default
-    namespace: production
+    namespace: ($namespace)
     port: 8080
   resourceRef:
     apiVersion: devopstoolkitseries.com/v1alpha1
@@ -45,7 +44,7 @@ spec:
     host: silly-demo.54.204.223.4.nip.io
     image: ghcr.io/vfarcic/silly-demo:1.4.113
     kubernetesProviderConfigName: default
-    namespace: production
+    namespace: ($namespace)
     port: 8080
   resourceRefs:
   - apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -80,7 +79,7 @@ spec:
         labels:
           app.kubernetes.io/name: backend
         name: backend
-        namespace: production
+        namespace: ($namespace)
       spec:
         selector:
           matchLabels:
@@ -113,6 +112,43 @@ spec:
   providerConfigRef:
     name: backend
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: backend
+  name: backend
+  namespace: ($namespace)
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+    spec:
+      containers:
+      - image: ghcr.io/vfarcic/silly-demo:1.4.113
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+        name: backend
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+        resources:
+          limits:
+            cpu: 250m
+            memory: 256Mi
+          requests:
+            cpu: 125m
+            memory: 128Mi
+---
 apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: Object
 metadata:
@@ -134,7 +170,7 @@ spec:
         labels:
           app.kubernetes.io/name: backend
         name: backend
-        namespace: production
+        namespace: ($namespace)
       spec:
         ingressClassName: traefik
         rules:
@@ -170,7 +206,7 @@ spec:
         labels:
           app.kubernetes.io/name: backend
         name: backend
-        namespace: production
+        namespace: ($namespace)
       spec:
         ports:
         - name: http

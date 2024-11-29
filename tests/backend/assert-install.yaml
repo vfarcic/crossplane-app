@@ -58,7 +58,7 @@ spec:
     name: backend-service
   - apiVersion: kubernetes.crossplane.io/v1alpha1
     kind: ProviderConfig
-    name: backend
+    name: backend-app
 ---
 apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: Object
@@ -110,7 +110,7 @@ spec:
                   cpu: 125m
                   memory: 128Mi
   providerConfigRef:
-    name: backend
+    name: backend-app
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -185,7 +185,7 @@ spec:
               path: /
               pathType: ImplementationSpecific
   providerConfigRef:
-    name: backend
+    name: backend-app
 ---
 apiVersion: kubernetes.crossplane.io/v1alpha1
 kind: Object
@@ -217,5 +217,5 @@ spec:
           app.kubernetes.io/name: backend
         type: ClusterIP
   providerConfigRef:
-    name: backend
+    name: backend-app
 

@@ -3,12 +3,27 @@ dxr = {
     **oxr
     status.host = oxr.spec.parameters.host
 }
+
+schema providerConfig:
+    _apiVersion: str
+    _suffix: str
+    apiVersion = _apiVersion
+    kind = "ProviderConfig"
+    metadata = {
+        name = oxr.spec.id + "-app"
+        annotations = {
+            "krm.kcl.dev/ready" = "True"
+            "krm.kcl.dev/composition-resource-name" = oxr.spec.id + "-provider-config-" + _suffix
+        }
+    }
+    spec = {
+        credentials.source = "InjectedIdentity"
+    }
+
 _items = [
-    {
-        apiVersion = "kubernetes.crossplane.io/v1alpha1"
-        kind = "ProviderConfig"
-        metadata.name = oxr.spec.id
-        spec.credentials.source = "InjectedIdentity"
+    providerConfig {
+        _apiVersion = "kubernetes.crossplane.io/v1alpha1"
+        _suffix = "kubernetes"
     } , {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
@@ -93,7 +108,7 @@ _items = [
                     }
                 }
             }
-            providerConfigRef.name = oxr.spec.id
+            providerConfigRef.name = oxr.spec.id + "-app"
         }
     }, {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
@@ -123,7 +138,7 @@ _items = [
                     }
                 }
             }
-            providerConfigRef.name = oxr.spec.id
+            providerConfigRef.name = oxr.spec.id + "-app"
         }
     }, {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
@@ -159,7 +174,7 @@ _items = [
                     }]
                 }
             }
-            providerConfigRef.name = oxr.spec.id
+            providerConfigRef.name = oxr.spec.id + "-app"
         }
     }
 ]
@@ -209,7 +224,7 @@ if oxr.spec.parameters?.scaling?.enabled:
                     }]
                 }
             }
-            providerConfigRef.name = oxr.spec.id
+            providerConfigRef.name = oxr.spec.id + "-app"
         }
     }]
 

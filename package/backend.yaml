@@ -24,7 +24,7 @@ spec:
       metadata:
         name: kubernetes
       spec:
-        target: Resources
+        target: Default
         source: |+
           oxr = option("params").oxr
           dxr = {

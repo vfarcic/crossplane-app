@@ -28,7 +28,7 @@ schema Spec:
                 kind = "KCLRun"
                 metadata.name = "kubernetes"
                 spec = {
-                    target = "Resources"
+                    target = "Default"
                     source = _kclResources
                 }
             }

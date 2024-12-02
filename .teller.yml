@@ -1,0 +1,9 @@
+providers:
+  google_secrets_manager:
+    kind: google_secretmanager
+    maps:
+      - id: secrets
+        path: projects/vfarcic
+        keys:
+          github-token: GITHUB_TOKEN
+          github-user: GITHUB_OWNER

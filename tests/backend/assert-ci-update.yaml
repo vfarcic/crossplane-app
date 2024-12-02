@@ -1,0 +1,86 @@
+---
+apiVersion: devopstoolkitseries.com/v1alpha1
+kind: AppClaim
+metadata:
+  name: silly-demo
+spec:
+  parameters:
+    ci:
+      runTests: false
+      buildImages: false
+---
+apiVersion: devopstoolkitseries.com/v1alpha1
+kind: App
+metadata:
+  labels:
+    crossplane.io/claim-name: silly-demo
+    crossplane.io/claim-namespace: ($namespace)
+spec:
+  parameters:
+    ci:
+      runTests: false
+      buildImages: false
+---
+apiVersion: repo.github.upbound.io/v1alpha1
+kind: RepositoryFile
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: backend-file-gha
+  name: backend-file-gha
+spec:
+  forProvider:
+    branch: ci
+    commitAuthor: Crossplane
+    commitEmail: github-provider@crossplane.io
+    commitMessage: GitHub Actions [skip ci]
+    file: .github/workflows/ci.yaml
+    repository: my-repo
+    content: |-
+      name: ci
+      run-name: ci
+      on:
+        push:
+          branches:
+            - main
+      jobs:
+        all:
+          runs-on: ubuntu-latest
+          env:
+            TAG: 0.1.${{ github.run_number }}
+            FORCE_COLOR: 1
+          steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3
+            - name: Login to ghcr
+              uses: docker/login-action@v3
+              with:
+                registry: ghcr.io
+                username: vfarcic
+                password: ${{ secrets.REGISTRY_PASSWORD }}
+            - name: Install devbox
+              uses: jetify-com/devbox-install-action@v0.11.0
+              with:
+                project-path: devbox-ci.json
+            - name: Build and push
+              run: |
+                devbox run --config devbox-ci.json -- ./dot.nu run ci $TAG --run_tests false --build_images false
+              env:
+                REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+            - name: Commit changes
+              run: |
+                git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                git config --local user.name "github-actions[bot]"
+                git add .
+                git commit -m "Release ${{ env.TAG }} [skip ci]"
+            - name: Push changes
+              uses: ad-m/github-push-action@master
+              with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                branch: ${{ github.ref }}
+
+# FIXME: Disable tests
+# FIXME: Disable build
+# FIXME: Disable update
+# FIXME: Disable language in nu and devbox

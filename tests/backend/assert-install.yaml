@@ -2,7 +2,7 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo-backend
+  name: silly-demo
 spec:
   compositionRef:
     name: app-backend
@@ -13,7 +13,8 @@ spec:
   id: backend
   parameters:
     host: silly-demo.54.204.223.4.nip.io
-    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    image: ghcr.io/vfarcic/silly-demo
+    tag: "1.4.113"
     kubernetesProviderConfigName: default
     namespace: ($namespace)
     port: 8080
@@ -25,13 +26,13 @@ apiVersion: devopstoolkitseries.com/v1alpha1
 kind: App
 metadata:
   labels:
-    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-name: silly-demo
     crossplane.io/claim-namespace: ($namespace)
 spec:
   claimRef:
     apiVersion: devopstoolkitseries.com/v1alpha1
     kind: AppClaim
-    name: silly-demo-backend
+    name: silly-demo
     namespace: ($namespace)
   compositionRef:
     name: app-backend
@@ -42,7 +43,8 @@ spec:
   id: backend
   parameters:
     host: silly-demo.54.204.223.4.nip.io
-    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    image: ghcr.io/vfarcic/silly-demo
+    tag: "1.4.113"
     kubernetesProviderConfigName: default
     namespace: ($namespace)
     port: 8080
@@ -67,7 +69,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-deployment
     crossplane.io/external-name: backend-deployment
   labels:
-    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-name: silly-demo
     crossplane.io/claim-namespace: ($namespace)
   name: backend-deployment
 spec:
@@ -156,7 +158,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-ingress
     crossplane.io/external-name: backend-ingress
   labels:
-    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-name: silly-demo
     crossplane.io/claim-namespace: ($namespace)
   name: backend-ingress
 spec:
@@ -194,7 +196,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-service
     crossplane.io/external-name: backend-service
   labels:
-    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-name: silly-demo
     crossplane.io/claim-namespace: ($namespace)
   name: backend-service
 spec:

@@ -11,6 +11,7 @@ common.Composition {
     }
     spec = common.Spec {
         _kclResources = file.read("kcl/backend-resources.k")
+        _kclCiResources = file.read("kcl/ci-resources.k")
     }
 }
 

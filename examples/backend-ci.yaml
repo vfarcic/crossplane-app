@@ -16,7 +16,8 @@ spec:
     tag: "1.0.8"
     port: 8080
     host: silly-demo.54.159.206.46.nip.io
-    scaling:
+    repository:
       enabled: true
-      min: 2
-      max: 5
+      name: dot-test
+    ci:
+      enabled: true

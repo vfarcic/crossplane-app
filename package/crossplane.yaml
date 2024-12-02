@@ -14,3 +14,5 @@ spec:
       version: ">=v0.6.0"
     - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
       version: ">=v0.2.1"
+    - function: xpkg.upbound.io/coopnorge/provider-github
+      version: ">=v0.13.0"

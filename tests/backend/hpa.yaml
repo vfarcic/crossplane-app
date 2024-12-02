@@ -1,7 +1,7 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo-backend
+  name: silly-demo
 spec:
   id: backend
   compositionSelector:

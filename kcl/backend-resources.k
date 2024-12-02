@@ -1,7 +1,9 @@
 oxr = option("params").oxr
+_id = oxr.spec.id
+_params = oxr.spec.parameters
 dxr = {
     **oxr
-    status.host = oxr.spec.parameters.host
+    status.host = _params.host
 }
 
 schema providerConfig:
@@ -10,10 +12,10 @@ schema providerConfig:
     apiVersion = _apiVersion
     kind = "ProviderConfig"
     metadata = {
-        name = oxr.spec.id + "-app"
+        name = _id + "-app"
         annotations = {
             "krm.kcl.dev/ready" = "True"
-            "krm.kcl.dev/composition-resource-name" = oxr.spec.id + "-provider-config-" + _suffix
+            "krm.kcl.dev/composition-resource-name" = _id + "-provider-config-" + _suffix
         }
     }
     spec = {
@@ -27,41 +29,41 @@ _items = [
     } , {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-deployment".format(oxr.spec.id)
+        metadata.name = "{}-deployment".format(_id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "apps/v1"
                 kind = "Deployment"
                 metadata = {
-                    name = oxr.spec.id
-                    namespace = oxr.spec.parameters.namespace
+                    name = _id
+                    namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = oxr.spec.id
+                        "app.kubernetes.io/name" = _id
                     }
                 }
                 spec = {
                     selector.matchLabels = {
-                        "app.kubernetes.io/name" = oxr.spec.id
+                        "app.kubernetes.io/name" = _id
                     }
                     template = {
                         metadata.labels = {
-                            "app.kubernetes.io/name" = oxr.spec.id
+                            "app.kubernetes.io/name" = _id
                         }
                         spec = {
                             containers = [{
-                                image = oxr.spec.parameters.image
+                                image = _params.image + ":" + _params.tag
                                 name = "backend"
                                 ports = [{containerPort = 80 }]
                                 livenessProbe = {
                                     httpGet = {
                                         path = "/"
-                                        port = oxr.spec.parameters.port
+                                        port = _params.port
                                     }
                                 }
                                 readinessProbe = {
                                     httpGet = {
                                         path = "/"
-                                        port = oxr.spec.parameters.port
+                                        port = _params.port
                                     }
                                 }
                                 resources = {
@@ -69,38 +71,38 @@ _items = [
                                     requests = {cpu = "125m", memory = "128Mi" }
                                 }
                                 ports = [
-                                    {containerPort = oxr.spec.parameters.port }
+                                    {containerPort = _params.port }
                                 ]
-                                if oxr.spec.parameters?.db?.secret:
+                                if _params.db?.secret:
                                     env = [
                                         {
                                             name = "DB_ENDPOINT"
                                             valueFrom.secretKeyRef = {
                                                 key = "endpoint"
-                                                name = oxr.spec.parameters.db.secret
+                                                name = _params.db.secret
                                             }
                                         }, {
                                             name = "DB_PASSWORD"
                                             valueFrom.secretKeyRef = {
                                                 key = "password"
-                                                name = oxr.spec.parameters.db.secret
+                                                name = _params.db.secret
                                             }
                                         }, {
                                             name = "DB_PORT"
                                             valueFrom.secretKeyRef = {
                                                 key = "port"
-                                                name = oxr.spec.parameters.db.secret
+                                                name = _params.db.secret
                                                 optional = True
                                             }
                                         }, {
                                             name = "DB_USERNAME"
                                             valueFrom.secretKeyRef = {
                                                 key = "username"
-                                                name = oxr.spec.parameters.db.secret
+                                                name = _params.db.secret
                                             }
                                         }, {
                                             name = "DB_NAME"
-                                            value = oxr.spec.id
+                                            value = _id
                                         },
                                     ]
                             }]
@@ -108,101 +110,101 @@ _items = [
                     }
                 }
             }
-            providerConfigRef.name = oxr.spec.id + "-app"
+            providerConfigRef.name = _id + "-app"
         }
     }, {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-service".format(oxr.spec.id)
+        metadata.name = "{}-service".format(_id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "v1"
                 kind = "Service"
                 metadata = {
-                    name = oxr.spec.id
-                    namespace = oxr.spec.parameters.namespace
+                    name = _id
+                    namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = oxr.spec.id
+                        "app.kubernetes.io/name" = _id
                     }
                 }
                 spec = {
                     type = "ClusterIP"
                     ports = [{
-                        port = oxr.spec.parameters.port
-                        targetPort = oxr.spec.parameters.port
+                        port = _params.port
+                        targetPort = _params.port
                         protocol = "TCP"
                         name = "http"
                     }]
                     selector = {
-                        "app.kubernetes.io/name" = oxr.spec.id
+                        "app.kubernetes.io/name" = _id
                     }
                 }
             }
-            providerConfigRef.name = oxr.spec.id + "-app"
+            providerConfigRef.name = _id + "-app"
         }
     }, {
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-ingress".format(oxr.spec.id)
+        metadata.name = "{}-ingress".format(_id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "networking.k8s.io/v1"
                 kind = "Ingress"
                 metadata = {
-                    name = oxr.spec.id
-                    namespace = oxr.spec.parameters.namespace
+                    name = _id
+                    namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = oxr.spec.id
+                        "app.kubernetes.io/name" = _id
                     }
                     annotations = {"ingress.kubernetes.io/ssl-redirect" = "false" }
                 }
                 spec = {
-                    if oxr.spec.parameters?.ingressClassName:
-                        ingressClassName = oxr.spec.parameters.ingressClassName
+                    if _params.ingressClassName:
+                        ingressClassName = _params.ingressClassName
                     rules = [{
-                        host = oxr.spec.parameters.host
+                        host = _params.host
                         http = {
                             paths = [{
                                 path = "/"
                                 pathType = "ImplementationSpecific"
                                 backend.service = {
-                                    name = oxr.spec.id
-                                    port.number = oxr.spec.parameters.port
+                                    name = _id
+                                    port.number = _params.port
                                 }
                             }]
                         }
                     }]
                 }
             }
-            providerConfigRef.name = oxr.spec.id + "-app"
+            providerConfigRef.name = _id + "-app"
         }
     }
 ]
 
-if oxr.spec.parameters?.scaling?.enabled:
+if _params.scaling?.enabled:
     _items += [{
         apiVersion = "kubernetes.crossplane.io/v1alpha1"
         kind = "Object"
-        metadata.name = "{}-hpa".format(oxr.spec.id)
+        metadata.name = "{}-hpa".format(_id)
         spec = {
             forProvider.manifest = {
                 apiVersion = "autoscaling/v2"
                 kind = "HorizontalPodAutoscaler"
                 metadata = {
-                    name = oxr.spec.id
-                    namespace = oxr.spec.parameters.namespace
+                    name = _id
+                    namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = oxr.spec.id
+                        "app.kubernetes.io/name" = _id
                     }
                 }
                 spec = {
                     scaleTargetRef = {
                         apiVersion = "apps/v1"
                         kind = "Deployment"
-                        name = oxr.spec.id
+                        name = _id
                     }
-                    minReplicas = oxr.spec.parameters.scaling.min
-                    maxReplicas = oxr.spec.parameters.scaling.max
+                    minReplicas = _params.scaling.min
+                    maxReplicas = _params.scaling.max
                     metrics = [{
                         type = "Resource"
                         resource = {
@@ -224,7 +226,7 @@ if oxr.spec.parameters?.scaling?.enabled:
                     }]
                 }
             }
-            providerConfigRef.name = oxr.spec.id + "-app"
+            providerConfigRef.name = _id + "-app"
         }
     }]
 

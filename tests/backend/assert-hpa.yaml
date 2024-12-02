@@ -2,7 +2,7 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo-backend
+  name: silly-demo
 spec:
   parameters:
     scaling:
@@ -13,7 +13,7 @@ apiVersion: devopstoolkitseries.com/v1alpha1
 kind: App
 metadata:
   labels:
-    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-name: silly-demo
     crossplane.io/claim-namespace: ($namespace)
 spec:
   parameters:
@@ -28,7 +28,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-hpa
     crossplane.io/external-name: backend-hpa
   labels:
-    crossplane.io/claim-name: silly-demo-backend
+    crossplane.io/claim-name: silly-demo
     crossplane.io/claim-namespace: ($namespace)
   name: backend-hpa
 spec:

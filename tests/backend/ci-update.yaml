@@ -9,5 +9,6 @@ spec:
       type: backend
       location: local
   parameters:
-    scaling:
-      enabled: true
+    ci:
+      runTests: false
+      buildImages: false

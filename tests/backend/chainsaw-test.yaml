@@ -18,6 +18,14 @@ spec:
             file: hpa.yaml
         - assert:
             file: assert-hpa.yaml
+        - patch:
+            file: ci.yaml
+        - assert:
+            file: assert-ci.yaml
+        - patch:
+            file: ci-update.yaml
+        - assert:
+            file: assert-ci-update.yaml
       # catch:
       #   - get:
       #       resource: apps

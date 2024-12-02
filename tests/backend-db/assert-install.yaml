@@ -2,7 +2,7 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo-backend-db
+  name: silly-demo-db
   namespace: ($namespace)
 spec:
   compositionRef:
@@ -14,7 +14,8 @@ spec:
   id: backend-db
   parameters:
     host: silly-demo.54.204.223.4.nip.io
-    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    image: ghcr.io/vfarcic/silly-demo
+    tag: "1.4.113"
     kubernetesProviderConfigName: default
     namespace: production
     port: 8080
@@ -28,13 +29,13 @@ apiVersion: devopstoolkitseries.com/v1alpha1
 kind: App
 metadata:
   labels:
-    crossplane.io/claim-name: silly-demo-backend-db
+    crossplane.io/claim-name: silly-demo-db
     crossplane.io/claim-namespace: ($namespace)
 spec:
   claimRef:
     apiVersion: devopstoolkitseries.com/v1alpha1
     kind: AppClaim
-    name: silly-demo-backend-db
+    name: silly-demo-db
     namespace: ($namespace)
   compositionRef:
     name: app-backend
@@ -45,7 +46,8 @@ spec:
   id: backend-db
   parameters:
     host: silly-demo.54.204.223.4.nip.io
-    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    image: ghcr.io/vfarcic/silly-demo
+    tag: "1.4.113"
     kubernetesProviderConfigName: default
     namespace: production
     port: 8080
@@ -72,7 +74,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-db-deployment
     crossplane.io/external-name: backend-db-deployment
   labels:
-    crossplane.io/claim-name: silly-demo-backend-db
+    crossplane.io/claim-name: silly-demo-db
     crossplane.io/claim-namespace: ($namespace)
   name: backend-db-deployment
 spec:
@@ -148,7 +150,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-db-ingress
     crossplane.io/external-name: backend-db-ingress
   labels:
-    crossplane.io/claim-name: silly-demo-backend-db
+    crossplane.io/claim-name: silly-demo-db
     crossplane.io/claim-namespace: ($namespace)
   name: backend-db-ingress
 spec:
@@ -185,7 +187,7 @@ metadata:
     crossplane.io/composition-resource-name: backend-db-service
     crossplane.io/external-name: backend-db-service
   labels:
-    crossplane.io/claim-name: silly-demo-backend-db
+    crossplane.io/claim-name: silly-demo-db
     crossplane.io/claim-namespace: ($namespace)
   name: backend-db-service
 spec:

@@ -1,0 +1,7 @@
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: coopnorge-provider-github
+spec:
+  package: xpkg.upbound.io/coopnorge/provider-github:v0.13.0

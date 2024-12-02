@@ -10,6 +10,7 @@ schema Metadata:
 
 schema Spec:
     _kclResources: str
+    _kclCiResources: str
     compositeTypeRef = {
         apiVersion = "devopstoolkitseries.com/v1alpha1"
         kind = "App"
@@ -30,6 +31,18 @@ schema Spec:
                 spec = {
                     target = "Default"
                     source = _kclResources
+                }
+            }
+        }, {
+            step = "kcl-ci"
+            functionRef.name = "crossplane-contrib-function-kcl"
+            input = {
+                apiVersion = "krm.kcl.dev/v1alpha1"
+                kind = "KCLRun"
+                metadata.name = "kubernetes"
+                spec = {
+                    target = "Default"
+                    source = _kclCiResources
                 }
             }
         }, {

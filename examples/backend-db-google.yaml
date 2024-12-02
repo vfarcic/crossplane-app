@@ -10,7 +10,8 @@ spec:
       location: local
   parameters:
     namespace: a-team
-    image: c8n.io/vfarcic/silly-demo:1.4.52
+    image: c8n.io/vfarcic/silly-demo
+    tag: "1.4.52"
     port: 8080
     host: silly-demo.127.0.0.1.nip.io
     db:

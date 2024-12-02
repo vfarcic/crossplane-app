@@ -1,7 +1,7 @@
 apiVersion: devopstoolkitseries.com/v1alpha1
 kind: AppClaim
 metadata:
-  name: silly-demo-backend
+  name: silly-demo
 spec:
   id: backend
   compositionSelector:
@@ -10,7 +10,8 @@ spec:
       location: local
   parameters:
     namespace: ($namespace)
-    image: ghcr.io/vfarcic/silly-demo:1.4.113
+    image: ghcr.io/vfarcic/silly-demo
+    tag: "1.4.113"
     port: 8080
     host: silly-demo.54.204.223.4.nip.io
     ingressClassName: traefik

@@ -10,9 +10,9 @@ metadata:
     meta.crossplane.io/readme: A Configuration package that defines application types like frontend, backend, backend with a database, etc.
 spec:
   dependsOn:
+    - provider: xpkg.upbound.io/coopnorge/provider-github
+      version: ">=v0.13.0"
     - function: xpkg.upbound.io/crossplane-contrib/function-kcl
       version: ">=v0.6.0"
     - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
       version: ">=v0.2.1"
-    - function: xpkg.upbound.io/coopnorge/provider-github
-      version: ">=v0.13.0"

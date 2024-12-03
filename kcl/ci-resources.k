@@ -220,7 +220,6 @@ FROM scratch
 ARG VERSION
 ENV VERSION=$VERSION
 ENV DB_PORT=5432 DB_USERNAME=postgres DB_NAME=my-db
-COPY cache /cache
 COPY --from=build /src/app /usr/local/bin/app
 EXPOSE 8080
 CMD ["app"]

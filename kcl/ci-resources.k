@@ -61,7 +61,7 @@ jobs:
   all:
     runs-on: ubuntu-latest
     env:
-      TAG: 0.1.$[[ github.run_number ]]
+      TAG: 0.0.$[[ github.run_number ]]
       FORCE_COLOR: 1
     steps:
       - name: Checkout

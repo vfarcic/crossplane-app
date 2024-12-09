@@ -131,8 +131,9 @@ spec:
 
       # Runs all CI tasks
       def "main run ci" [
-          tag: string           # The tag of the image (e.g., 0.0.1)
-          --run_tests = true    # Whether to run tests
+          tag: string # The tag of the image (e.g., 0.0.1)
+          manifest = "apps/backend.yaml" # The path to the manifest file
+          --run_tests = true # Whether to run tests
           --build_images = true # Whether to build images
       ] {
       
@@ -141,10 +142,10 @@ spec:
           }
 
           if $build_images {
-              main build image $"($TAG)"
+              main build image $tag
           }
 
-          main update claim
+          main update claim $tag $manifest
       
       }
 
@@ -180,8 +181,8 @@ spec:
 
       # Updates the claim
       def "main update claim" [
-          tag: string  # The tag of the image (e.g., 0.0.1)
-          path: string # The path to the claim file
+          tag: string # The tag of the image (e.g., 0.0.1)
+          path = "apps/backend.yaml" # The path to the claim file
       ] {
       
           open $path | upsert spec.parameters.tag $tag | save $path --force

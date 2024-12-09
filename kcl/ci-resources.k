@@ -114,8 +114,9 @@ def main [] {}
 
 # Runs all CI tasks
 def "main run ci" [
-    tag: string           # The tag of the image (e.g., 0.0.1)
-    --run_tests = true    # Whether to run tests
+    tag: string # The tag of the image (e.g., 0.0.1)
+    manifest = "REPLACE_MANIFEST" # The path to the manifest file
+    --run_tests = true # Whether to run tests
     --build_images = true # Whether to build images
 ] {
 
@@ -124,10 +125,10 @@ def "main run ci" [
     }
 
     if $build_images {
-        main build image $"($TAG)"
+        main build image $tag
     }
 
-    main update claim
+    main update claim $tag $manifest
 
 }
 
@@ -163,14 +164,14 @@ def "main build image" [
 
 # Updates the claim
 def "main update claim" [
-    tag: string  # The tag of the image (e.g., 0.0.1)
-    path: string # The path to the claim file
+    tag: string # The tag of the image (e.g., 0.0.1)
+    path = "REPLACE_MANIFEST" # The path to the claim file
 ] {
 
     open $path | upsert spec.parameters.tag $tag | save $path --force
 
 }
-""".replace("REPLACE_IMAGE", _params.image)
+""".replace("REPLACE_IMAGE", _params.image).replace("REPLACE_MANIFEST", "apps/" + _id + ".yaml")
         }
     }, {
         apiVersion = "repo.github.upbound.io/v1alpha1"

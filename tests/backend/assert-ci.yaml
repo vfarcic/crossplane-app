@@ -149,9 +149,13 @@ spec:
       }
 
       # Runs tests
-      def "main run tests" [] {
-      
-          go test -v $"(pwd)/..."
+      def "main run tests" [
+          --language = "go" # The language of the project (e.g., go)
+      ] {
+
+          if $language == "go" {
+              go test -v $"(pwd)/..."
+          }
       
       }
 

@@ -132,9 +132,13 @@ def "main run ci" [
 }
 
 # Runs tests
-def "main run tests" [] {
+def "main run tests" [
+    --language = "go" # The language of the project (e.g., go)
+] {
 
-    go test -v $"(pwd)/..."
+    if $language == "go" {
+        go test -v $"(pwd)/..."
+    }
 
 }
 

@@ -78,7 +78,7 @@ jobs:
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
           project-path: devbox-ci.json
-      - name: Build and push
+      - name: All
         run: |
           REPLACE_DEVBOX_RUN
         env:

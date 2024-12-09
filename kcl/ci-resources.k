@@ -124,7 +124,7 @@ def "main run ci" [
     }
 
     if $build_images {
-        main build image --tag $"($TAG)"
+        main build image $"($TAG)"
     }
 
     main update claim
@@ -232,4 +232,3 @@ CMD ["app"]
     }]
 
 items = _items
-

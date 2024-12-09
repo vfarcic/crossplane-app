@@ -76,11 +76,11 @@ tasks:
   cluster-destroy:
     desc: Destroys the cluster
     cmds:
-      - kind delete cluster
+      - kind delete cluster --name test
   cluster-create-kind:
     desc: Creates a kind cluster
     cmds:
-      - cmd: kind create cluster
+      - cmd: kind create cluster --name test
         ignore_error: true
     internal: true
   helm-repo:

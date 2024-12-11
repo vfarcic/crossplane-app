@@ -39,7 +39,7 @@ schema Spec:
             input = {
                 apiVersion = "krm.kcl.dev/v1alpha1"
                 kind = "KCLRun"
-                metadata.name = "kubernetes"
+                metadata.name = "ci"
                 spec = {
                     target = "Default"
                     source = _kclCiResources
@@ -74,21 +74,5 @@ schema KubernetesObjectSpec:
 
 schema KubernetesObjectForProvider:
     manifest: any
-
-Patches = lambda name: str -> [] {
-    [
-        {
-            fromFieldPath = "spec.id"
-            toFieldPath = "metadata.name"
-            transforms = [{type = "string", string = {
-                fmt = "%s-{}".format(name),
-                type = "Format",
-            }}]
-        },
-        {fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.name"},
-        {fromFieldPath = "spec.parameters.namespace", toFieldPath = "spec.forProvider.manifest.metadata.namespace"},
-        {fromFieldPath = "spec.id", toFieldPath = "spec.forProvider.manifest.metadata.labels.app"},
-    ]
-}
 
 ManifestSpec = "spec.forProvider.manifest.spec"

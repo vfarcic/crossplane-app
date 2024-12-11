@@ -62,8 +62,9 @@ spec:
     branch: ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
-    commitMessage: GitHub Actions [skip ci]
+    commitMessage: .github/workflows/ci.yaml [skip ci]
     file: .github/workflows/ci.yaml
+    overwriteOnCreate: true
     repository: my-repo
     content: |-
       name: ci
@@ -123,6 +124,7 @@ spec:
     commitEmail: github-provider@crossplane.io
     commitMessage: dot.nu [skip ci]
     file: dot.nu
+    overwriteOnCreate: true
     repository: my-repo
     content: |-
       #!/usr/bin/env nu
@@ -202,6 +204,7 @@ spec:
     commitEmail: github-provider@crossplane.io
     commitMessage: devbox-ci.json [skip ci]
     file: devbox-ci.json
+    overwriteOnCreate: true
     repository: my-repo
     content: |-
       {
@@ -230,6 +233,7 @@ spec:
     commitEmail: github-provider@crossplane.io
     commitMessage: Dockerfile [skip ci]
     file: Dockerfile
+    overwriteOnCreate: true
     repository: my-repo
     content: |
       FROM golang:1.23.3-alpine AS build

@@ -32,7 +32,7 @@ spec:
     branch: ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
-    commitMessage: GitHub Actions [skip ci]
+    commitMessage: .github/workflows/ci.yaml [skip ci]
     file: .github/workflows/ci.yaml
     repository: my-repo
     content: |-
@@ -46,7 +46,7 @@ spec:
         all:
           runs-on: ubuntu-latest
           env:
-            TAG: 0.1.${{ github.run_number }}
+            TAG: 0.0.${{ github.run_number }}
             FORCE_COLOR: 1
           steps:
             - name: Checkout

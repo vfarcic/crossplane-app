@@ -1,56 +1,88 @@
+import template
+
 oxr = option("params").oxr
+# oxr = {
+#   spec = {
+#     id = "123"
+#     parameters = {
+#       image = "IMAGE"
+#       repository = {
+#         enabled = True
+#         name = "REPO"
+#       }
+#       ci = {
+#         enabled = True
+#       }
+#     }
+#   }
+# }
 _id = oxr.spec.id
 _params = oxr.spec.parameters
 dxr = {
-    **oxr
-    status.host = _params.host
+  **oxr
+  status.host = _params.host
 }
 
+schema RepositoryFile:
+  apiVersion = "repo.github.upbound.io/v1alpha1"
+  kind = "RepositoryFile"
+  metadata: any
+  spec: RepositoryFileSpec
+
+schema RepositoryFileSpec:
+  forProvider: RepositoryFileForProvider
+
+schema RepositoryFileForProvider:
+  branch = "ci"
+  commitAuthor = "Crossplane"
+  commitEmail = "github-provider@crossplane.io"
+  commitMessage = "${file} [skip ci]"
+  file: str
+  overwriteOnCreate = True
+  repository = _params.repository.name
+  content: str
+
 _metadata = lambda suffix: str, kind: str -> any {
-    {
-        if suffix == "":
-            name = _id
-            annotations = {
-                "krm.kcl.dev/composition-resource-name" = _id + "-" + kind
-            }
-        else:
-            name = _id + "-" + kind + "-" + suffix
-            annotations = {
-                "krm.kcl.dev/composition-resource-name" = _id + "-" + kind + "-" + suffix
-            }
-    }
+  {
+    if suffix == "":
+      name = _id
+      annotations = {
+        "krm.kcl.dev/composition-resource-name" = _id + "-" + kind
+      }
+    else:
+      name = _id + "-" + kind + "-" + suffix
+      annotations = {
+        "krm.kcl.dev/composition-resource-name" = _id + "-" + kind + "-" + suffix
+      }
+  }
 }
 
 _devboxRun = "devbox run --config devbox-ci.json -- ./dot.nu run ci $TAG"
 
 if not _params.ci?.runTests:
-    _devboxRun = _devboxRun + " --run_tests false"
+  _devboxRun = _devboxRun + " --run_tests false"
 if not _params.ci?.buildImages:
-    _devboxRun = _devboxRun + " --build_images false"
-        
+  _devboxRun = _devboxRun + " --build_images false"
+
 _items = []
 
 if _params.ci?.enabled and _params.repository?.enabled and _params.repository?.name:
-    _items += [{
-        apiVersion = "repo.github.upbound.io/v1alpha1"
-        kind = "Branch"
-        metadata = _metadata("ci", "branch")
-        spec.forProvider = {
-            branch = "ci"
-            repository = _params.repository.name
-        }
-    }, {
-        apiVersion = "repo.github.upbound.io/v1alpha1"
-        kind = "RepositoryFile"
-        metadata = _metadata("gha", "file")
-        spec.forProvider = {
-            branch = "ci"
-            commitAuthor = "Crossplane"
-            commitEmail = "github-provider@crossplane.io"
-            commitMessage = "GitHub Actions [skip ci]"
-            file = ".github/workflows/ci.yaml"
-            repository = _params.repository.name
-            content = """\
+    _items += [
+    {
+      apiVersion = "repo.github.upbound.io/v1alpha1"
+      kind = "Branch"
+      metadata = _metadata("ci", "branch")
+      spec.forProvider = {
+        branch = "ci"
+        repository = _params.repository.name
+      }
+    },
+    RepositoryFile{
+      metadata = _metadata("gha", "file")
+      spec: RepositoryFileSpec{
+        forProvider: RepositoryFileForProvider{
+          file = ".github/workflows/ci.yaml"
+          content = template.execute("""\
 name: ci
 run-name: ci
 on:
@@ -80,7 +112,7 @@ jobs:
           project-path: devbox-ci.json
       - name: All
         run: |
-          REPLACE_DEVBOX_RUN
+          {{devboxRun}}
         env:
           REGISTRY_PASSWORD: $[[ secrets.REGISTRY_PASSWORD ]]
       - name: Commit changes
@@ -94,20 +126,18 @@ jobs:
         with:
           github_token: $[[ secrets.GITHUB_TOKEN ]]
           branch: $[[ github.ref ]]
-""".replace("[[", "{{").replace("]]", "}}").replace("REPLACE_DEVBOX_RUN", _devboxRun)
+""", {
+  devboxRun: _devboxRun
+}).replace("[[", "{{").replace("]]", "}}")
         }
-    }, {
-        apiVersion = "repo.github.upbound.io/v1alpha1"
-        kind = "RepositoryFile"
-        metadata = _metadata("dot-nu", "file")
-        spec.forProvider = {
-            branch = "ci"
-            commitAuthor = "Crossplane"
-            commitEmail = "github-provider@crossplane.io"
-            commitMessage = "dot.nu [skip ci]"
-            file = "dot.nu"
-            repository = _params.repository.name
-            content = """\
+      }
+    },
+    RepositoryFile{
+      metadata = _metadata("dot-nu", "file")
+      spec: RepositoryFileSpec{
+        forProvider: RepositoryFileForProvider{
+          file = "dot.nu"
+          content = template.execute("""\
 #!/usr/bin/env nu
 
 def main [] {}
@@ -115,7 +145,7 @@ def main [] {}
 # Runs all CI tasks
 def "main run ci" [
     tag: string # The tag of the image (e.g., 0.0.1)
-    manifest = "REPLACE_MANIFEST" # The path to the manifest file
+    manifest = "apps/{{id}}.yaml" # The path to the manifest file
     --run_tests = true # Whether to run tests
     --build_images = true # Whether to build images
 ] {
@@ -149,15 +179,15 @@ def "main build image" [
     --push = true # Whether to push the image to the registry
 ] {
 
-    docker image build --tag $"REPLACE_IMAGE:latest" .
+    docker image build --tag $"{{image}}:latest" .
 
-    docker image tag $"REPLACE_IMAGE:latest" $"REPLACE_IMAGE:($tag)"
+    docker image tag $"{{image}}:latest" $"{{image}}:($tag)"
 
     if $push {
 
-        docker image push $"REPLACE_IMAGE:latest"
+        docker image push $"{{image}}:latest"
 
-        docker image push $"REPLACE_IMAGE:($tag)"
+        docker image push $"{{image}}:($tag)"
     }
 
 }
@@ -165,26 +195,25 @@ def "main build image" [
 # Updates the claim
 def "main update claim" [
     tag: string # The tag of the image (e.g., 0.0.1)
-    path = "REPLACE_MANIFEST" # The path to the claim file
+    path = "apps/{{id}}.yaml" # The path to the claim file
 ] {
 
     open $path | upsert spec.parameters.tag $tag | save $path --force
 
 }
-""".replace("REPLACE_IMAGE", _params.image).replace("REPLACE_MANIFEST", "apps/" + _id + ".yaml")
+""", {
+  image: _params.image,
+  id: _id
+})
         }
-    }, {
-        apiVersion = "repo.github.upbound.io/v1alpha1"
-        kind = "RepositoryFile"
-        metadata = _metadata("devbox", "file")
-        spec.forProvider = {
-            branch = "ci"
-            commitAuthor = "Crossplane"
-            commitEmail = "github-provider@crossplane.io"
-            commitMessage = "devbox-ci.json [skip ci]"
-            file = "devbox-ci.json"
-            repository = _params.repository.name
-            content = """\
+      }
+    },
+    RepositoryFile{
+      metadata = _metadata("devbox", "file")
+      spec: RepositoryFileSpec{
+        forProvider: RepositoryFileForProvider{
+          file = "devbox-ci.json"
+          content = """\
 {
   "packages": [
     "nushell@0.100.0",
@@ -199,18 +228,14 @@ def "main update claim" [
 }
 """
         }
-    }, {
-        apiVersion = "repo.github.upbound.io/v1alpha1"
-        kind = "RepositoryFile"
-        metadata = _metadata("dockerfile", "file")
-        spec.forProvider = {
-            branch = "ci"
-            commitAuthor = "Crossplane"
-            commitEmail = "github-provider@crossplane.io"
-            commitMessage = "Dockerfile [skip ci]"
-            file = "Dockerfile"
-            repository = _params.repository.name
-            content = """\
+      }
+    },
+    RepositoryFile{
+      metadata = _metadata("dockerfile", "file")
+      spec: RepositoryFileSpec{
+        forProvider: RepositoryFileForProvider{
+          file = "Dockerfile"
+          content = """\
 FROM golang:1.23.3-alpine AS build
 RUN mkdir /src
 WORKDIR /src
@@ -230,6 +255,8 @@ EXPOSE 8080
 CMD ["app"]
 """
         }
-    }]
+      }
+    }
+  ]
 
 items = _items

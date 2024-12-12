@@ -241,7 +241,6 @@ RUN mkdir /src
 WORKDIR /src
 ADD ./go.mod .
 ADD ./go.sum .
-ADD ./vendor .
 ADD ./*.go ./
 RUN GOOS=linux GOARCH=amd64 go build -o app
 RUN chmod +x app

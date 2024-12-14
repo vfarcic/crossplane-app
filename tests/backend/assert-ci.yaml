@@ -39,6 +39,9 @@ spec:
   (resourceRefs[?name == 'backend-file-dockerfile']):
   - apiVersion: repo.github.upbound.io/v1alpha1
     kind: RepositoryFile
+  (resourceRefs[?name == 'backend']):
+  - apiVersion: repo.github.upbound.io/v1alpha1
+    kind: PullRequest
 ---
 apiVersion: repo.github.upbound.io/v1alpha1
 kind: Branch
@@ -48,7 +51,7 @@ metadata:
   name: backend-branch-ci
 spec:
   forProvider:
-    branch: ci
+    branch: backend-ci
     repository: my-repo
 ---
 apiVersion: repo.github.upbound.io/v1alpha1
@@ -59,7 +62,7 @@ metadata:
   name: backend-file-gha
 spec:
   forProvider:
-    branch: ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: .github/workflows/ci.yaml [skip ci]
@@ -119,7 +122,7 @@ metadata:
   name: backend-file-dot-nu
 spec:
   forProvider:
-    branch: ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: dot.nu [skip ci]
@@ -199,7 +202,7 @@ metadata:
   name: backend-file-devbox
 spec:
   forProvider:
-    branch: ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: devbox-ci.json [skip ci]
@@ -228,14 +231,14 @@ metadata:
   name: backend-file-dockerfile
 spec:
   forProvider:
-    branch: ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: Dockerfile [skip ci]
     file: Dockerfile
     overwriteOnCreate: true
     repository: my-repo
-    content: |
+    content: |-
       FROM golang:1.23.3-alpine AS build
       RUN mkdir /src
       WORKDIR /src
@@ -252,3 +255,16 @@ spec:
       COPY --from=build /src/app /usr/local/bin/app
       EXPOSE 8080
       CMD ["app"]
+---
+apiVersion: repo.github.upbound.io/v1alpha1
+kind: PullRequest
+metadata:
+  name: backend
+spec:
+  forProvider:
+    baseRef: main
+    headRef: backend-ci
+    body: Review, merge, enjoy.
+    title: "CI"
+    baseRepositorySelector:
+      matchControllerRef: true

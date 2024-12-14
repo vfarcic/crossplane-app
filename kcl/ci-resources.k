@@ -1,21 +1,21 @@
 import template
 
+oxrMock = {
+  spec = {
+    id = "123"
+    parameters = {
+      image = "IMAGE"
+      repository = {
+        enabled = True
+        name = "REPO"
+      }
+      ci = {
+        enabled = True
+      }
+    }
+  }
+}
 oxr = option("params").oxr
-# oxr = {
-#   spec = {
-#     id = "123"
-#     parameters = {
-#       image = "IMAGE"
-#       repository = {
-#         enabled = True
-#         name = "REPO"
-#       }
-#       ci = {
-#         enabled = True
-#       }
-#     }
-#   }
-# }
 _id = oxr.spec.id
 _params = oxr.spec.parameters
 dxr = {
@@ -33,7 +33,7 @@ schema RepositoryFileSpec:
   forProvider: RepositoryFileForProvider
 
 schema RepositoryFileForProvider:
-  branch = "ci"
+  branch = "${_id}-ci"
   commitAuthor = "Crossplane"
   commitEmail = "github-provider@crossplane.io"
   commitMessage = "${file} [skip ci]"
@@ -73,7 +73,7 @@ if _params.ci?.enabled and _params.repository?.enabled and _params.repository?.n
       kind = "Branch"
       metadata = _metadata("ci", "branch")
       spec.forProvider = {
-        branch = "ci"
+        branch = "${_id}-ci"
         repository = _params.repository.name
       }
     },
@@ -255,6 +255,17 @@ CMD ["app"]
 """
         }
       }
+    }, {
+        apiVersion = "repo.github.upbound.io/v1alpha1"
+        kind = "PullRequest"
+        metadata = _metadata("", "pull-request")
+        spec.forProvider = {
+            baseRef = "main"
+            headRef = "${_id}-ci"
+            body = "Review, merge, enjoy."
+            title = "CI"
+            baseRepositorySelector.matchControllerRef = True
+        }
     }
   ]
 

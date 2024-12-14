@@ -29,7 +29,7 @@ metadata:
   name: backend-file-gha
 spec:
   forProvider:
-    branch: ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: .github/workflows/ci.yaml [skip ci]
@@ -79,8 +79,3 @@ spec:
               with:
                 github_token: ${{ secrets.GITHUB_TOKEN }}
                 branch: ${{ github.ref }}
-
-# FIXME: Disable tests
-# FIXME: Disable build
-# FIXME: Disable update
-# FIXME: Disable language in nu and devbox

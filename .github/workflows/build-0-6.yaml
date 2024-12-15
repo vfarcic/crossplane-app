@@ -11,16 +11,18 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Build the package
+      - name: Install Devbox
+        uses: jetpack-io/devbox-install-action@v0.11.0
+        with:
+          enable-cache: true
+      - name: Test
+        run: devbox run test
+      - name: Publish
         run: |
-          cd package
-          curl -sL https://cli.upbound.io | sh
-          ./up login --token ${{ secrets.UP_TOKEN }}
-          ./up xpkg build --name app.xpkg
-          ./up xpkg push --package app.xpkg xpkg.upbound.io/${{ secrets.UP_ACCOUNT }}/dot-application:v0.6.${{ github.run_number }}
-      - name: Update config
-        run: |
-          yq --inplace ".spec.package = \"xpkg.upbound.io/devops-toolkit/dot-application:v0.6.${{ github.run_number }}\"" config.yaml
+          export UP_TOKEN=${{ secrets.UP_TOKEN }}
+          export UP_ACCOUNT=${{ secrets.UP_ACCOUNT }}
+          export VERSION=v0.0.${{ github.run_number }}
+          devbox run package-publish
       - name: Commit changes
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"

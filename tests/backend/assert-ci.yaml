@@ -130,7 +130,7 @@ spec:
     overwriteOnCreate: true
     repository: my-repo
     content: |-
-      \#!/usr/bin/env nu
+      #!/usr/bin/env nu
       
       def main [] {}
 

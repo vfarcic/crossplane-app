@@ -137,7 +137,7 @@ jobs:
       spec: RepositoryFileSpec{
         forProvider: RepositoryFileForProvider{
           file = "dot.nu"
-          content = template.execute("""
+          content = template.execute("""\
 \#!/usr/bin/env nu
 
 def main [] {}

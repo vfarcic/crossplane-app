@@ -137,12 +137,12 @@ jobs:
       spec: RepositoryFileSpec{
         forProvider: RepositoryFileForProvider{
           file = "dot.nu"
-          content = template.execute("""\
-\#!/usr/bin/env nu
+          content = template.execute("""
+#!/usr/bin/env nu
 
 def main [] {}
 
-\# Runs all CI tasks
+# Runs all CI tasks
 def "main run ci" [
     tag: string # The tag of the image (e.g., 0.0.1)
     manifest = "apps/{{id}}.yaml" # The path to the manifest file

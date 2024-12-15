@@ -129,7 +129,8 @@ spec:
     file: dot.nu
     overwriteOnCreate: true
     repository: my-repo
-    content: |-
+    content: |2-
+
       #!/usr/bin/env nu
       
       def main [] {}

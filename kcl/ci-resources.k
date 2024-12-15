@@ -138,13 +138,13 @@ jobs:
         forProvider: RepositoryFileForProvider{
           file = "dot.nu"
           content = template.execute("""
-#!/usr/bin/env nu
+\#!/usr/bin/env nu
 
 def main [] {}
 
-# Runs all CI tasks
+\# Runs all CI tasks
 def "main run ci" [
-    tag: string # The tag of the image (e.g., 0.0.1)
+    tag: string # The tag of the image (e.g., 0.0.1)!
     manifest = "apps/{{id}}.yaml" # The path to the manifest file
     --run_tests = true # Whether to run tests
     --build_images = true # Whether to build images
@@ -162,7 +162,7 @@ def "main run ci" [
 
 }
 
-# Runs tests
+\# Runs tests
 def "main run tests" [
     --language = "go" # The language of the project (e.g., go)
 ] {
@@ -173,7 +173,7 @@ def "main run tests" [
 
 }
 
-# Builds and (optionally) pushes container images
+\# Builds and (optionally) pushes container images
 def "main build image" [
     tag: string   # The tag of the image (e.g., 0.0.1)
     --push = true # Whether to push the image to the registry
@@ -192,7 +192,7 @@ def "main build image" [
 
 }
 
-# Updates the claim
+\# Updates the claim
 def "main update claim" [
     tag: string # The tag of the image (e.g., 0.0.1)
     path = "apps/{{id}}.yaml" # The path to the claim file

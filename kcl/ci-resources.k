@@ -144,7 +144,7 @@ def main [] {}
 
 # Runs all CI tasks
 def "main run ci" [
-    tag: string # The tag of the image (e.g., 0.0.1)
+    tag: string # The tag of the image (e.g., 0.0.1)!
     manifest = "apps/REPLACE_ID.yaml" # The path to the manifest file
     --run_tests = true # Whether to run tests
     --build_images = true # Whether to build images

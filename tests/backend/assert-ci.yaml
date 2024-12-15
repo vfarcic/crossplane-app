@@ -266,5 +266,4 @@ spec:
     headRef: backend-ci
     body: Review, merge, enjoy.
     title: "CI"
-    baseRepositorySelector:
-      matchControllerRef: true
+    baseRepository: my-repo

@@ -264,7 +264,7 @@ CMD ["app"]
             headRef = "${_id}-ci"
             body = "Review, merge, enjoy."
             title = "CI"
-            baseRepositorySelector.matchControllerRef = True
+            baseRepository = _params.repository.name
         }
     }
   ]

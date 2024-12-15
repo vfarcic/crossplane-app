@@ -137,7 +137,7 @@ jobs:
       spec: RepositoryFileSpec{
         forProvider: RepositoryFileForProvider{
           file = "dot.nu"
-          content = template.execute("""\
+          content = """\
 #!/usr/bin/env nu
 
 def main [] {}
@@ -145,7 +145,7 @@ def main [] {}
 # Runs all CI tasks
 def "main run ci" [
     tag: string # The tag of the image (e.g., 0.0.1)
-    manifest = "apps/{{id}}.yaml" # The path to the manifest file
+    manifest = "apps/REPLACE_ID.yaml" # The path to the manifest file
     --run_tests = true # Whether to run tests
     --build_images = true # Whether to build images
 ] {
@@ -179,15 +179,15 @@ def "main build image" [
     --push = true # Whether to push the image to the registry
 ] {
 
-    docker image build --tag $"{{image}}:latest" .
+    docker image build --tag $"REPLACE_IMAGE:latest" .
 
-    docker image tag $"{{image}}:latest" $"{{image}}:($tag)"
+    docker image tag $"REPLACE_IMAGE:latest" $"REPLACE_IMAGE:($tag)"
 
     if $push {
 
-        docker image push $"{{image}}:latest"
+        docker image push $"REPLACE_IMAGE:latest"
 
-        docker image push $"{{image}}:($tag)"
+        docker image push $"REPLACE_IMAGE:($tag)"
     }
 
 }
@@ -195,16 +195,13 @@ def "main build image" [
 # Updates the claim
 def "main update claim" [
     tag: string # The tag of the image (e.g., 0.0.1)
-    path = "apps/{{id}}.yaml" # The path to the claim file
+    path = "apps/REPLACE_ID.yaml" # The path to the claim file
 ] {
 
     open $path | upsert spec.parameters.tag $tag | save $path --force
 
 }
-""", {
-  image: _params.image,
-  id: _id
-})
+""".replace("REPLACE_ID", _id).replace("REPLACE_IMAGE", _params.image)
         }
       }
     },

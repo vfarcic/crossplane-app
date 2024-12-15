@@ -24,7 +24,7 @@ tasks:
       - up xpkg build --package-root package --name sql.xpkg
       - up xpkg push --package package/sql.xpkg xpkg.upbound.io/$UP_ACCOUNT/dot-sql:$VERSION
       - rm package/sql.xpkg
-      - yq --inplace ".spec.package = \"xpkg.upbound.io/devops-toolkit/dot-sql:$VERSION\"" config.yaml
+      - yq --inplace ".spec.package = \"xpkg.upbound.io/devops-toolkit/dot-application:$VERSION\"" config.yaml
 
   # Test
   test:

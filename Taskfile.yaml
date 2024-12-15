@@ -21,9 +21,9 @@ tasks:
       - package-generate
     cmds:
       - up login --token $UP_TOKEN
-      - up xpkg build --package-root package --name sql.xpkg
-      - up xpkg push --package package/sql.xpkg xpkg.upbound.io/$UP_ACCOUNT/dot-sql:$VERSION
-      - rm package/sql.xpkg
+      - up xpkg build --package-root package --name app.xpkg
+      - up xpkg push --package package/app.xpkg xpkg.upbound.io/$UP_ACCOUNT/dot-app:$VERSION
+      - rm package/app.xpkg
       - yq --inplace ".spec.package = \"xpkg.upbound.io/devops-toolkit/dot-application:$VERSION\"" config.yaml
 
   # Test

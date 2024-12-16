@@ -1,5 +1,5 @@
 ---
-apiVersion: devopstoolkitseries.com/v1alpha1
+apiVersion: devopstoolkit.live/v1alpha1
 kind: AppClaim
 metadata:
   name: silly-demo
@@ -10,7 +10,7 @@ spec:
       min: 1
       max: 10
 ---
-apiVersion: devopstoolkitseries.com/v1alpha1
+apiVersion: devopstoolkit.live/v1alpha1
 kind: App
 metadata:
   labels:

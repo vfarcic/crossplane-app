@@ -1,5 +1,5 @@
 ---
-apiVersion: devopstoolkitseries.com/v1alpha1
+apiVersion: devopstoolkit.live/v1alpha1
 kind: AppClaim
 metadata:
   name: silly-demo
@@ -11,7 +11,7 @@ spec:
     ci:
       enabled: true
 ---
-apiVersion: devopstoolkitseries.com/v1alpha1
+apiVersion: devopstoolkit.live/v1alpha1
 kind: App
 metadata:
   labels:
@@ -97,7 +97,6 @@ spec:
               uses: jetify-com/devbox-install-action@v0.11.0
               with:
                 project-path: devbox-ci.json
-                enable-cache: true
             - name: All
               run: |
                 devbox run --config devbox-ci.json -- ./dot.nu run ci $TAG

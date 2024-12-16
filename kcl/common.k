@@ -12,7 +12,7 @@ schema Spec:
     _kclResources: str
     _kclCiResources: str
     compositeTypeRef = {
-        apiVersion = "devopstoolkitseries.com/v1alpha1"
+        apiVersion = "devopstoolkit.live/v1alpha1"
         kind = "App"
     }
     patchSets = [{

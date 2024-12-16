@@ -1,11 +1,11 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: apps.devopstoolkitseries.com
+  name: apps.devopstoolkit.live
 spec:
   defaultCompositionRef:
     name: app-frontend
-  group: devopstoolkitseries.com
+  group: devopstoolkit.live
   names:
     kind: App
     plural: apps

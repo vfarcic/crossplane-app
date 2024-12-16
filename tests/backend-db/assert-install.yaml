@@ -1,5 +1,5 @@
 ---
-apiVersion: devopstoolkitseries.com/v1alpha1
+apiVersion: devopstoolkit.live/v1alpha1
 kind: AppClaim
 metadata:
   name: silly-demo-db
@@ -22,10 +22,10 @@ spec:
     db:
       secret: my-db
   resourceRef:
-    apiVersion: devopstoolkitseries.com/v1alpha1
+    apiVersion: devopstoolkit.live/v1alpha1
     kind: App
 ---
-apiVersion: devopstoolkitseries.com/v1alpha1
+apiVersion: devopstoolkit.live/v1alpha1
 kind: App
 metadata:
   labels:
@@ -33,7 +33,7 @@ metadata:
     crossplane.io/claim-namespace: ($namespace)
 spec:
   claimRef:
-    apiVersion: devopstoolkitseries.com/v1alpha1
+    apiVersion: devopstoolkit.live/v1alpha1
     kind: AppClaim
     name: silly-demo-db
     namespace: ($namespace)

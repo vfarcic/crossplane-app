@@ -110,7 +110,6 @@ jobs:
         uses: jetify-com/devbox-install-action@v0.11.0
         with:
           project-path: devbox-ci.json
-          enable-cache: true
       - name: All
         run: |
           {{devboxRun}}

@@ -101,6 +101,7 @@ spec:
                     type: string
                     default: default
                 required:
+                - namespace
                 - image
                 - tag
             required:

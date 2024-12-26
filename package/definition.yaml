@@ -4,7 +4,7 @@ metadata:
   name: apps.devopstoolkit.live
 spec:
   defaultCompositionRef:
-    name: app-frontend
+    name: app-backend
   group: devopstoolkit.live
   names:
     kind: App

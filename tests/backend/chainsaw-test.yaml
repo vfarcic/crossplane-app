@@ -5,27 +5,44 @@ metadata:
 spec:
   template: true
   steps:
-    - try:
-        - apply:
-            file: install.yaml
-        - assert:
-            file: assert-install.yaml
-        - patch:
-            file: hpa-default.yaml
-        - assert:
-            file: assert-hpa-default.yaml
-        - patch:
-            file: hpa.yaml
-        - assert:
-            file: assert-hpa.yaml
-        - patch:
-            file: ci.yaml
-        - assert:
-            file: assert-ci.yaml
-        - patch:
-            file: ci-update.yaml
-        - assert:
-            file: assert-ci-update.yaml
+  - try:
+    - apply:
+        file: install.yaml
+    - assert:
+        file: assert-install.yaml
+    - patch:
+        file: hpa-default.yaml
+    - assert:
+        file: assert-hpa-default.yaml
+    - patch:
+        file: hpa.yaml
+    - assert:
+        file: assert-hpa.yaml
+    - patch:
+        file: ci.yaml
+    - assert:
+        file: assert-ci.yaml
+    - patch:
+        file: ci-update.yaml
+    - assert:
+        file: assert-ci-update.yaml
+    - patch:
+        file: ci-tool-none.yaml
+        expect:
+        - match:
+            apiVersion: repo.github.upbound.io/v1alpha1
+            kind: RepositoryFile
+            metadata:
+              name: backend-file-gha
+          check:
+            ($error != null): true
+        - match:
+            apiVersion: repo.github.upbound.io/v1alpha1
+            kind: RepositoryFile
+            metadata:
+              name: backend-file-gha-port
+          check:
+            ($error != null): true
       # catch:
       #   - get:
       #       resource: apps

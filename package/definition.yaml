@@ -88,6 +88,10 @@ spec:
                         description: Whether to enable CI. If enabled, the repository must be enabled as well.
                         type: boolean
                         default: false
+                      tool:
+                        description: "The type of the workflow tool. Currently supported: gha (GitHub Actions), none."
+                        type: string
+                        default: gha
                       runTests:
                         description: Whether to run tests
                         type: boolean

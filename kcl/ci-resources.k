@@ -66,17 +66,8 @@ if not _params.ci?.buildImages:
 
 _items = []
 
-if _params.ci?.enabled and _params.repository?.enabled and _params.repository?.name:
-    _items += [
-    {
-      apiVersion = "repo.github.upbound.io/v1alpha1"
-      kind = "Branch"
-      metadata = _metadata("ci", "branch")
-      spec.forProvider = {
-        branch = "${_id}-ci"
-        repository = _params.repository.name
-      }
-    },
+if _params.ci?.tool == "gha":
+  _items += [
     RepositoryFile{
       metadata = _metadata("gha", "file")
       spec: RepositoryFileSpec{
@@ -126,9 +117,7 @@ jobs:
         with:
           github_token: $[[ secrets.GITHUB_TOKEN ]]
           branch: $[[ github.ref ]]
-""", {
-  devboxRun: _devboxRun
-}).replace("[[", "{{").replace("]]", "}}")
+""", { devboxRun: _devboxRun }).replace("[[", "{{").replace("]]", "}}")
         }
       }
     },
@@ -204,6 +193,19 @@ jobs:
           git push
 """.replace("[[", "{{").replace("]]", "}}")
         }
+      }
+    },
+  ]
+
+if _params.ci?.enabled and _params.repository?.enabled and _params.repository?.name:
+  _items += [
+    {
+      apiVersion = "repo.github.upbound.io/v1alpha1"
+      kind = "Branch"
+      metadata = _metadata("ci", "branch")
+      spec.forProvider = {
+        branch = "${_id}-ci"
+        repository = _params.repository.name
       }
     },
     RepositoryFile{

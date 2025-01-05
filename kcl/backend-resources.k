@@ -53,7 +53,6 @@ _items = [
                             containers = [{
                                 image = _params.image + ":" + _params.tag
                                 name = "backend"
-                                ports = [{containerPort = 80 }]
                                 livenessProbe = {
                                     httpGet = {
                                         path = "/"

@@ -8,7 +8,7 @@
     "yq-go@4.41.1",
     "go-task@3.31.0",
     "kubernetes-helm@3.17.0",
-    "kyverno-chainsaw@0.1.7",
+    "kyverno-chainsaw@0.2.12",
     "kcl-cli@0.8.9",
     "zellij@0.41.1",
     "crossplane-cli@1.17.1",

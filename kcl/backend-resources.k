@@ -155,7 +155,10 @@ _items = [
                     labels = {
                         "app.kubernetes.io/name" = _id
                     }
-                    annotations = {"ingress.kubernetes.io/ssl-redirect" = "false" }
+                    annotations = {
+                        "ingress.kubernetes.io/ssl-redirect" = "false"
+                        "dev.okteto.com/generate-host" = "true"
+                    }
                 }
                 spec = {
                     if _params.ingressClassName:

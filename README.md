@@ -1,8 +1,11 @@
 ```sh
 devbox shell
 
-zellij --layout zellij.kdl
-```
-> Press `ctrl+t+2` to switch to the "Done" tab and the enter key to destroy the cluster
+task cluster-create
 
-> Press `ctrl+q` to exit
+task test-watch
+
+task cluster-destroy
+
+exit
+```

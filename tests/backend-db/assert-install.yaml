@@ -161,6 +161,7 @@ spec:
       metadata:
         annotations:
           ingress.kubernetes.io/ssl-redirect: "false"
+          dev.okteto.com/generate-host: "true"
         labels:
           app.kubernetes.io/name: backend-db
         name: backend-db

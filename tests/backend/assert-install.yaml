@@ -79,17 +79,17 @@ spec:
       kind: Deployment
       metadata:
         labels:
-          app.kubernetes.io/name: backend
-        name: backend
+          app.kubernetes.io/name: silly-demo
+        name: silly-demo
         namespace: ($namespace)
       spec:
         selector:
           matchLabels:
-            app.kubernetes.io/name: backend
+            app.kubernetes.io/name: silly-demo
         template:
           metadata:
             labels:
-              app.kubernetes.io/name: backend
+              app.kubernetes.io/name: silly-demo
           spec:
             containers:
             - image: ghcr.io/vfarcic/silly-demo:1.4.113
@@ -97,7 +97,7 @@ spec:
                 httpGet:
                   path: /
                   port: 8080
-              name: backend
+              name: silly-demo
               ports:
               - containerPort: 8080
               readinessProbe:
@@ -118,17 +118,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubernetes.io/name: backend
-  name: backend
+    app.kubernetes.io/name: silly-demo
+  name: silly-demo
   namespace: ($namespace)
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: backend
+      app.kubernetes.io/name: silly-demo
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: backend
+        app.kubernetes.io/name: silly-demo
     spec:
       containers:
       - image: ghcr.io/vfarcic/silly-demo:1.4.113
@@ -136,7 +136,7 @@ spec:
           httpGet:
             path: /
             port: 8080
-        name: backend
+        name: silly-demo
         ports:
         - containerPort: 8080
         readinessProbe:
@@ -171,8 +171,8 @@ spec:
           ingress.kubernetes.io/ssl-redirect: "false"
           dev.okteto.com/generate-host: "true"
         labels:
-          app.kubernetes.io/name: backend
-        name: backend
+          app.kubernetes.io/name: silly-demo
+        name: silly-demo
         namespace: ($namespace)
       spec:
         ingressClassName: traefik
@@ -182,7 +182,7 @@ spec:
             paths:
             - backend:
                 service:
-                  name: backend
+                  name: silly-demo
                   port:
                     number: 8080
               path: /
@@ -207,8 +207,8 @@ spec:
       kind: Service
       metadata:
         labels:
-          app.kubernetes.io/name: backend
-        name: backend
+          app.kubernetes.io/name: silly-demo
+        name: silly-demo
         namespace: ($namespace)
       spec:
         ports:
@@ -217,7 +217,7 @@ spec:
           protocol: TCP
           targetPort: 8080
         selector:
-          app.kubernetes.io/name: backend
+          app.kubernetes.io/name: silly-demo
         type: ClusterIP
   providerConfigRef:
     name: backend-app

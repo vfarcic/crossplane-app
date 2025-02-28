@@ -84,17 +84,17 @@ spec:
       kind: Deployment
       metadata:
         labels:
-          app.kubernetes.io/name: backend-db
-        name: backend-db
+          app.kubernetes.io/name: silly-demo-db
+        name: silly-demo-db
         namespace: production
       spec:
         selector:
           matchLabels:
-            app.kubernetes.io/name: backend-db
+            app.kubernetes.io/name: silly-demo-db
         template:
           metadata:
             labels:
-              app.kubernetes.io/name: backend-db
+              app.kubernetes.io/name: silly-demo-db
           spec:
             containers:
             - env:
@@ -126,7 +126,7 @@ spec:
                 httpGet:
                   path: /
                   port: 8080
-              name: backend
+              name: silly-demo-db
               ports:
               - containerPort: 8080
               readinessProbe:
@@ -163,8 +163,8 @@ spec:
           ingress.kubernetes.io/ssl-redirect: "false"
           dev.okteto.com/generate-host: "true"
         labels:
-          app.kubernetes.io/name: backend-db
-        name: backend-db
+          app.kubernetes.io/name: silly-demo-db
+        name: silly-demo-db
         namespace: production
       spec:
         rules:
@@ -173,7 +173,7 @@ spec:
             paths:
             - backend:
                 service:
-                  name: backend-db
+                  name: silly-demo-db
                   port:
                     number: 8080
               path: /
@@ -198,8 +198,8 @@ spec:
       kind: Service
       metadata:
         labels:
-          app.kubernetes.io/name: backend-db
-        name: backend-db
+          app.kubernetes.io/name: silly-demo-db
+        name: silly-demo-db
         namespace: production
       spec:
         ports:
@@ -208,7 +208,7 @@ spec:
           protocol: TCP
           targetPort: 8080
         selector:
-          app.kubernetes.io/name: backend-db
+          app.kubernetes.io/name: silly-demo-db
         type: ClusterIP
   providerConfigRef:
     name: backend-db-app

@@ -42,14 +42,14 @@ spec:
       apiVersion: autoscaling/v2
       kind: HorizontalPodAutoscaler
       metadata:
-        name: backend
+        name: silly-demo
         labels:
-          app.kubernetes.io/name: backend
+          app.kubernetes.io/name: silly-demo
       spec:
         scaleTargetRef:
           apiVersion: apps/v1
           kind: Deployment
-          name: backend
+          name: silly-demo
         minReplicas: 1
         maxReplicas: 10
         metrics:
@@ -69,12 +69,12 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: backend
+  name: silly-demo
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: backend
+    name: silly-demo
   minReplicas: 1
   maxReplicas: 10
   metrics:

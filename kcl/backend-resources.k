@@ -1,4 +1,5 @@
 oxr = option("params").oxr
+_name = oxr.spec.claimRef.name
 _id = oxr.spec.id
 _params = oxr.spec.parameters
 dxr = {
@@ -35,24 +36,24 @@ _items = [
                 apiVersion = "apps/v1"
                 kind = "Deployment"
                 metadata = {
-                    name = _id
+                    name = _name
                     namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = _id
+                        "app.kubernetes.io/name" = _name
                     }
                 }
                 spec = {
                     selector.matchLabels = {
-                        "app.kubernetes.io/name" = _id
+                        "app.kubernetes.io/name" = _name
                     }
                     template = {
                         metadata.labels = {
-                            "app.kubernetes.io/name" = _id
+                            "app.kubernetes.io/name" = _name
                         }
                         spec = {
                             containers = [{
                                 image = _params.image + ":" + _params.tag
-                                name = "backend"
+                                name = _name
                                 livenessProbe = {
                                     httpGet = {
                                         path = "/"
@@ -120,10 +121,10 @@ _items = [
                 apiVersion = "v1"
                 kind = "Service"
                 metadata = {
-                    name = _id
+                    name = _name
                     namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = _id
+                        "app.kubernetes.io/name" = _name
                     }
                 }
                 spec = {
@@ -135,7 +136,7 @@ _items = [
                         name = "http"
                     }]
                     selector = {
-                        "app.kubernetes.io/name" = _id
+                        "app.kubernetes.io/name" = _name
                     }
                 }
             }
@@ -150,10 +151,10 @@ _items = [
                 apiVersion = "networking.k8s.io/v1"
                 kind = "Ingress"
                 metadata = {
-                    name = _id
+                    name = _name
                     namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = _id
+                        "app.kubernetes.io/name" = _name
                     }
                     annotations = {
                         "ingress.kubernetes.io/ssl-redirect" = "false"
@@ -170,7 +171,7 @@ _items = [
                                 path = "/"
                                 pathType = "ImplementationSpecific"
                                 backend.service = {
-                                    name = _id
+                                    name = _name
                                     port.number = _params.port
                                 }
                             }]
@@ -193,17 +194,17 @@ if _params.scaling?.enabled:
                 apiVersion = "autoscaling/v2"
                 kind = "HorizontalPodAutoscaler"
                 metadata = {
-                    name = _id
+                    name = _name
                     namespace = _params.namespace
                     labels = {
-                        "app.kubernetes.io/name" = _id
+                        "app.kubernetes.io/name" = _name
                     }
                 }
                 spec = {
                     scaleTargetRef = {
                         apiVersion = "apps/v1"
                         kind = "Deployment"
-                        name = _id
+                        name = _name
                     }
                     minReplicas = _params.scaling.min
                     maxReplicas = _params.scaling.max

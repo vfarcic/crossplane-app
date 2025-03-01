@@ -55,19 +55,19 @@ spec:
       secret: my-db
   resourceRefs:
   - apiVersion: kubernetes.crossplane.io/v1alpha1
-    kind: Object
-    name: backend-db-deployment
-  - apiVersion: kubernetes.crossplane.io/v1alpha1
-    kind: Object
-    name: backend-db-ingress
-  - apiVersion: kubernetes.crossplane.io/v1alpha1
-    kind: Object
-    name: backend-db-service
-  - apiVersion: kubernetes.crossplane.io/v1alpha1
     kind: ProviderConfig
     name: backend-db-app
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: backend-db-deployment
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: backend-db-ingress
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
+    kind: Object
+    name: backend-db-service
 ---
-apiVersion: kubernetes.crossplane.io/v1alpha1
+apiVersion: kubernetes.crossplane.io/v1alpha2
 kind: Object
 metadata:
   annotations:
@@ -143,7 +143,7 @@ spec:
   providerConfigRef:
     name: backend-db-app
 ---
-apiVersion: kubernetes.crossplane.io/v1alpha1
+apiVersion: kubernetes.crossplane.io/v1alpha2
 kind: Object
 metadata:
   annotations:
@@ -181,7 +181,7 @@ spec:
   providerConfigRef:
     name: backend-db-app
 ---
-apiVersion: kubernetes.crossplane.io/v1alpha1
+apiVersion: kubernetes.crossplane.io/v1alpha2
 kind: Object
 metadata:
   annotations:

@@ -56,6 +56,12 @@ spec:
                       secret:
                         description: The name of the Secret with DB authentication.
                         type: string
+                      storeName:
+                        description: The name of the secret store to use.
+                        type: string
+                      pullCredsKey:
+                        description: The key in the secrets store with for the secret with credentials.
+                        type: string
                   scaling:
                     type: object
                     properties:

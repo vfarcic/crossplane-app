@@ -23,10 +23,10 @@ spec:
       min: 1
       max: 10
   (resourceRefs[?name == 'backend-hpa']):
-  - apiVersion: kubernetes.crossplane.io/v1alpha1
+  - apiVersion: kubernetes.crossplane.io/v1alpha2
     kind: Object
 ---
-apiVersion: kubernetes.crossplane.io/v1alpha1
+apiVersion: kubernetes.crossplane.io/v1alpha2
 kind: Object
 metadata:
   annotations:

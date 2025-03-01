@@ -28,7 +28,7 @@ _items = [
         _apiVersion = "kubernetes.crossplane.io/v1alpha1"
         _suffix = "kubernetes"
     } , {
-        apiVersion = "kubernetes.crossplane.io/v1alpha1"
+        apiVersion = "kubernetes.crossplane.io/v1alpha2"
         kind = "Object"
         metadata.name = "{}-deployment".format(_id)
         spec = {
@@ -113,7 +113,7 @@ _items = [
             providerConfigRef.name = _id + "-app"
         }
     }, {
-        apiVersion = "kubernetes.crossplane.io/v1alpha1"
+        apiVersion = "kubernetes.crossplane.io/v1alpha2"
         kind = "Object"
         metadata.name = "{}-service".format(_id)
         spec = {
@@ -143,7 +143,7 @@ _items = [
             providerConfigRef.name = _id + "-app"
         }
     }, {
-        apiVersion = "kubernetes.crossplane.io/v1alpha1"
+        apiVersion = "kubernetes.crossplane.io/v1alpha2"
         kind = "Object"
         metadata.name = "{}-ingress".format(_id)
         spec = {
@@ -186,7 +186,7 @@ _items = [
 
 if _params.scaling?.enabled:
     _items += [{
-        apiVersion = "kubernetes.crossplane.io/v1alpha1"
+        apiVersion = "kubernetes.crossplane.io/v1alpha2"
         kind = "Object"
         metadata.name = "{}-hpa".format(_id)
         spec = {
@@ -227,6 +227,44 @@ if _params.scaling?.enabled:
                             }
                         }
                     }]
+                }
+            }
+            providerConfigRef.name = _id + "-app"
+        }
+    }]
+
+if _params.db?.storeName and _params.db?.pullCredsKey:
+    _items += [{
+        apiVersion = "kubernetes.crossplane.io/v1alpha2"
+        kind = "Object"
+        metadata.name = "{}-external-secret".format(_id)
+        spec = {
+            forProvider.manifest = {
+                apiVersion = "external-secrets.io/v1beta1"
+                kind = "ExternalSecret"
+                metadata = {
+                    name = _params.db.pullCredsKey
+                    namespace: oxr.spec.claimRef.namespace
+                }
+                spec = {
+                    dataFrom = [{
+                        extract = {
+                            conversionStrategy = "Default"
+                            decodingStrategy = "None"
+                            key = _params.db.pullCredsKey
+                            metadataPolicy = "None"
+                        }
+                    }]
+                    refreshInterval = "1h"
+                    secretStoreRef = {
+                        kind = "ClusterSecretStore"
+                        name = _params.db.storeName
+                    }
+                    target = {
+                        creationPolicy = "Owner"
+                        deletionPolicy = "Retain"
+                        name = _params.db.pullCredsKey
+                    }
                 }
             }
             providerConfigRef.name = _id + "-app"

@@ -43,15 +43,12 @@ spec:
                 name: backend-file-gha-port
             check:
               ($error != null): true
-    # catch:
-    #   - describe:
-    #     apiVersion: devopstoolkit.live/v1alpha1
-    #     kind: app
-    #     selector: crossplane.io/claim-namespace=$NAMESPACE
-    #     - get:
-    #         resource: apps
-    #     - get:
-    #         resource: managed
-    #     - describe:
-    #         resource: app
-    #         selector: crossplane.io/claim-namespace=$NAMESPACE
+      - patch:
+          file: pull-secret.yaml
+      - assert:
+          file: assert-pull-secret.yaml
+    catch:
+      - script:
+          content: kubectl describe app --selector crossplane.io/claim-namespace=$NAMESPACE
+      - script:
+          content: kubectl get managed

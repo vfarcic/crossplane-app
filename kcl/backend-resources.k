@@ -102,7 +102,10 @@ _items = [
                                             }
                                         }, {
                                             name = "DB_NAME"
-                                            value = _id
+                                            valueFrom.secretKeyRef = {
+                                                key = "database"
+                                                name = _params.db.secret
+                                            }
                                         },
                                     ]
                             }]

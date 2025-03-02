@@ -261,7 +261,7 @@ spec:
                   }
               }]
 
-          if _params.db?.storeName and _params.db?.pullCredsKey:
+          if _params.db?.storeName and _params.db?.secret:
               _items += [{
                   apiVersion = "kubernetes.crossplane.io/v1alpha2"
                   kind = "Object"
@@ -271,7 +271,7 @@ spec:
                           apiVersion = "external-secrets.io/v1beta1"
                           kind = "ExternalSecret"
                           metadata = {
-                              name = _params.db.pullCredsKey
+                              name = _params.db.secret
                               namespace: oxr.spec.claimRef.namespace
                           }
                           spec = {
@@ -279,7 +279,7 @@ spec:
                                   extract = {
                                       conversionStrategy = "Default"
                                       decodingStrategy = "None"
-                                      key = _params.db.pullCredsKey
+                                      key = _params.db.secret
                                       metadataPolicy = "None"
                                   }
                               }]
@@ -291,7 +291,7 @@ spec:
                               target = {
                                   creationPolicy = "Owner"
                                   deletionPolicy = "Retain"
-                                  name = _params.db.pullCredsKey
+                                  name = _params.db.secret
                               }
                           }
                       }

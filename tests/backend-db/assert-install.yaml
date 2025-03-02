@@ -120,10 +120,7 @@ spec:
                     key: username
                     name: my-db
               - name: DB_NAME
-                valueFrom:
-                  secretKeyRef:
-                    key: database
-                    name: my-db-name
+                value: my-db-name
               image: ghcr.io/vfarcic/silly-demo:1.4.113
               livenessProbe:
                 httpGet:

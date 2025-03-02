@@ -15,4 +15,5 @@ spec:
     port: 8080
     host: silly-demo.54.204.223.4.nip.io
     db:
+      name: my-db-name
       secret: my-db

@@ -104,7 +104,7 @@ _items = [
                                             name = "DB_NAME"
                                             valueFrom.secretKeyRef = {
                                                 key = "database"
-                                                name = _params.db.secret
+                                                name = _params.db.name
                                             }
                                         },
                                     ]

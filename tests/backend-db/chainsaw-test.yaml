@@ -10,13 +10,8 @@ spec:
             file: install.yaml
         - assert:
             file: assert-install.yaml
-    #   catch:
-    #     - get:
-    #         resource: apps
-    #     - get:
-    #         resource: appclaims
-    #     - get:
-    #         resource: managed
-    #     - describe:
-    #         resource: app
-    #         selector: crossplane.io/claim-namespace=$NAMESPACE
+      catch:
+        - script:
+            content: kubectl describe app --selector crossplane.io/claim-namespace=$NAMESPACE
+        - script:
+            content: kubectl get managed

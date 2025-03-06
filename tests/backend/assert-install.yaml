@@ -16,7 +16,6 @@ spec:
     image: ghcr.io/vfarcic/silly-demo
     tag: "1.4.113"
     kubernetesProviderConfigName: default
-    namespace: ($namespace)
     port: 8080
   resourceRef:
     apiVersion: devopstoolkit.live/v1alpha1
@@ -46,7 +45,6 @@ spec:
     image: ghcr.io/vfarcic/silly-demo
     tag: "1.4.113"
     kubernetesProviderConfigName: default
-    namespace: ($namespace)
     port: 8080
   resourceRefs:
   - apiVersion: kubernetes.crossplane.io/v1alpha1

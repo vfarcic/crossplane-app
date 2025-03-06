@@ -29,10 +29,6 @@ spec:
               parameters:
                 type: object
                 properties:
-                  namespace:
-                    description: The namespace
-                    type: string
-                    default: production
                   image:
                     description: The container image (e.g., `ghcr.io/vfarcic/silly-demo`)
                     type: string
@@ -111,7 +107,6 @@ spec:
                     type: string
                     default: default
                 required:
-                - namespace
                 - image
                 - tag
             required:

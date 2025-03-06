@@ -36,13 +36,6 @@ spec:
                 name: backend-file-gha
             check:
               ($error != null): true
-          - match:
-              apiVersion: repo.github.upbound.io/v1alpha1
-              kind: RepositoryFile
-              metadata:
-                name: backend-file-gha-port
-            check:
-              ($error != null): true
       - patch:
           file: pull-secret.yaml
       - assert:

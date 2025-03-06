@@ -9,7 +9,6 @@ spec:
       type: backend
       location: local
   parameters:
-    namespace: ($namespace)
     image: ghcr.io/vfarcic/silly-demo
     tag: "1.4.113"
     port: 8080

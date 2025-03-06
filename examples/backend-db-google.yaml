@@ -9,7 +9,6 @@ spec:
       type: backend-db-google
       location: local
   parameters:
-    namespace: a-team
     image: c8n.io/vfarcic/silly-demo
     tag: "1.4.52"
     port: 8080

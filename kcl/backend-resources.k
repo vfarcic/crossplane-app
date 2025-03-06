@@ -37,7 +37,7 @@ _items = [
                 kind = "Deployment"
                 metadata = {
                     name = _name
-                    namespace = _params.namespace
+                    namespace = oxr.spec.claimRef.namespace
                     labels = {
                         "app.kubernetes.io/name" = _name
                     }
@@ -122,7 +122,7 @@ _items = [
                 kind = "Service"
                 metadata = {
                     name = _name
-                    namespace = _params.namespace
+                    namespace = oxr.spec.claimRef.namespace
                     labels = {
                         "app.kubernetes.io/name" = _name
                     }
@@ -152,7 +152,7 @@ _items = [
                 kind = "Ingress"
                 metadata = {
                     name = _name
-                    namespace = _params.namespace
+                    namespace = oxr.spec.claimRef.namespace
                     labels = {
                         "app.kubernetes.io/name" = _name
                     }
@@ -195,7 +195,7 @@ if _params.scaling?.enabled:
                 kind = "HorizontalPodAutoscaler"
                 metadata = {
                     name = _name
-                    namespace = _params.namespace
+                    namespace = oxr.spec.claimRef.namespace
                     labels = {
                         "app.kubernetes.io/name" = _name
                     }

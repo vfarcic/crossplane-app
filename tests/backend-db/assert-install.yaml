@@ -17,7 +17,6 @@ spec:
     image: ghcr.io/vfarcic/silly-demo
     tag: "1.4.113"
     kubernetesProviderConfigName: default
-    namespace: production
     port: 8080
     db:
       secret: my-db
@@ -49,7 +48,6 @@ spec:
     image: ghcr.io/vfarcic/silly-demo
     tag: "1.4.113"
     kubernetesProviderConfigName: default
-    namespace: production
     port: 8080
     db:
       secret: my-db
@@ -86,7 +84,7 @@ spec:
         labels:
           app.kubernetes.io/name: silly-demo-db
         name: silly-demo-db
-        namespace: production
+        namespace: ($namespace)
       spec:
         selector:
           matchLabels:
@@ -165,7 +163,7 @@ spec:
         labels:
           app.kubernetes.io/name: silly-demo-db
         name: silly-demo-db
-        namespace: production
+        namespace: ($namespace)
       spec:
         rules:
         - host: silly-demo.54.204.223.4.nip.io
@@ -200,7 +198,7 @@ spec:
         labels:
           app.kubernetes.io/name: silly-demo-db
         name: silly-demo-db
-        namespace: production
+        namespace: ($namespace)
       spec:
         ports:
         - name: http

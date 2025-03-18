@@ -33,7 +33,7 @@ spec:
               apiVersion: repo.github.upbound.io/v1alpha1
               kind: RepositoryFile
               metadata:
-                name: backend-file-gha
+                name: silly-demo-file-gha
             check:
               ($error != null): true
       - patch:
@@ -42,6 +42,6 @@ spec:
           file: assert-pull-secret.yaml
     catch:
       - script:
-          content: kubectl describe app --selector crossplane.io/claim-namespace=$NAMESPACE
+          content: kubectl get app silly-demo --namespace $NAMESPACE --output yaml
       - script:
           content: kubectl get managed

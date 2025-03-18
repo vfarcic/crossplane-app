@@ -12,6 +12,6 @@ spec:
             file: assert-install.yaml
       catch:
         - script:
-            content: kubectl describe app --selector crossplane.io/claim-namespace=$NAMESPACE
+            content: kubectl get app silly-demo --namespace $NAMESPACE --output yaml
         - script:
             content: kubectl get managed

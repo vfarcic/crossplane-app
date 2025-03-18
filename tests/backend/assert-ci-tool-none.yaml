@@ -1,24 +1,11 @@
 ---
-apiVersion: devopstoolkit.live/v1alpha1
-kind: AppClaim
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
 metadata:
   name: silly-demo
 spec:
-  parameters:
-    ci:
-      tool: none
----
-apiVersion: devopstoolkit.live/v1alpha1
-kind: App
-metadata:
-  labels:
-    crossplane.io/claim-name: silly-demo
-    crossplane.io/claim-namespace: ($namespace)
-spec:
-  parameters:
-    ci:
-      runTests: false
-      buildImages: false
+  ci:
+    tool: none
 ---
 apiVersion: repo.github.upbound.io/v1alpha1
 kind: RepositoryFile

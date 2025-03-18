@@ -1,22 +1,21 @@
-apiVersion: devopstoolkit.live/v1alpha1
-kind: AppClaim
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
 metadata:
   name: silly-demo
   labels:
     app-owner: vfarcic
 spec:
-  id: silly-demo
-  compositionSelector:
-    matchLabels:
-      type: backend
-      location: local
-  parameters:
-    image: vfarcic/silly-demo
-    tag: "1.0.8"
-    port: 8080
-    host: silly-demo.54.159.206.46.nip.io
-    repository:
-      enabled: true
-      name: dot-test
-    ci:
-      enabled: true
+  image: vfarcic/silly-demo
+  tag: "1.0.8"
+  port: 8080
+  host: silly-demo.54.159.206.46.nip.io
+  repository:
+    enabled: true
+    name: dot-test
+  ci:
+    enabled: true
+  crossplane:
+    compositionSelector:
+      matchLabels:
+        type: backend
+        location: local

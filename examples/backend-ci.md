@@ -65,7 +65,7 @@ rm -rf dot-test
 kubectl --namespace a-team apply \
     --filename examples/backend-ci.yaml
 
-crossplane beta trace --namespace a-team appclaim silly-demo
+kubectl tree --namespace a-team app silly-demo
 
 gh repo view $GITHUB_OWNER/dot-test --web
 ```

@@ -12,13 +12,9 @@ schema Spec:
     _kclResources: str
     _kclCiResources: str
     compositeTypeRef = {
-        apiVersion = "devopstoolkit.live/v1alpha1"
+        apiVersion = "devopstoolkit.live/v1beta1"
         kind = "App"
     }
-    patchSets = [{
-        name = "metadata"
-        patches = [{fromFieldPath = "metadata.labels"}]
-    }]
     mode = "Pipeline"
     pipeline = [
         {

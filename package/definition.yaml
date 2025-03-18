@@ -1,4 +1,4 @@
-apiVersion: apiextensions.crossplane.io/v1
+apiVersion: apiextensions.crossplane.io/v2alpha1
 kind: CompositeResourceDefinition
 metadata:
   name: apps.devopstoolkit.live
@@ -9,11 +9,8 @@ spec:
   names:
     kind: App
     plural: apps
-  claimNames:
-    kind: AppClaim
-    plural: appclaims
   versions:
-  - name: v1alpha1
+  - name: v1beta1
     served: true
     referenceable: true
     schema:
@@ -23,95 +20,82 @@ spec:
           spec:
             type: object
             properties:
-              id:
+              image:
+                description: The container image (e.g., `ghcr.io/vfarcic/silly-demo`)
                 type: string
-                description: ID of this application that other objects will use to refer to it.
-              parameters:
+              tag:
+                description: The tag of the image (e.g., `1.2.3`)
+                type: string
+              port:
+                description: The application port
+                type: integer
+                default: 80
+              host:
+                description: The host address of the application
+                type: string
+                default: devopstoolkit.live
+              ingressClassName:
+                description: The Ingress class name
+                type: string
+              db:
                 type: object
                 properties:
-                  image:
-                    description: The container image (e.g., `ghcr.io/vfarcic/silly-demo`)
+                  secret:
+                    description: The name of the Secret with DB authentication.
                     type: string
-                  tag:
-                    description: The tag of the image (e.g., `1.2.3`)
+                  storeName:
+                    description: The name of the secret store to use to pull the secret.
                     type: string
-                  port:
-                    description: The application port
+                  name:
+                    description: The name of the database.
+                    type: string
+              scaling:
+                type: object
+                properties:
+                  enabled:
+                    description: Whether to enable scaling
+                    type: boolean
+                    default: false
+                  min:
+                    description: Minimum number of replicas
                     type: integer
-                    default: 80
-                  host:
-                    description: The host address of the application
+                    default: 1
+                  max:
+                    description: Maximum number of replicas
+                    type: integer
+                    default: 10
+              repository:
+                type: object
+                properties:
+                  enabled:
+                    description: Whether to enable a repository
+                    type: boolean
+                    default: false
+                  name:
+                    description: The name of the repository
                     type: string
-                    default: devopstoolkit.live
-                  ingressClassName:
-                    description: The Ingress class name
+              ci:
+                type: object
+                properties:
+                  enabled:
+                    description: Whether to enable CI. If enabled, the repository must be enabled as well.
+                    type: boolean
+                    default: false
+                  tool:
+                    description: "The type of the workflow tool. Currently supported: gha (GitHub Actions), none."
                     type: string
-                  db:
-                    type: object
-                    properties:
-                      secret:
-                        description: The name of the Secret with DB authentication.
-                        type: string
-                      storeName:
-                        description: The name of the secret store to use to pull the secret.
-                        type: string
-                      name:
-                        description: The name of the database.
-                        type: string
-                  scaling:
-                    type: object
-                    properties:
-                      enabled:
-                        description: Whether to enable scaling
-                        type: boolean
-                        default: false
-                      min:
-                        description: Minimum number of replicas
-                        type: integer
-                        default: 1
-                      max:
-                        description: Maximum number of replicas
-                        type: integer
-                        default: 10
-                  repository:
-                    type: object
-                    properties:
-                      enabled:
-                        description: Whether to enable a repository
-                        type: boolean
-                        default: false
-                      name:
-                        description: The name of the repository
-                        type: string
-                  ci:
-                    type: object
-                    properties:
-                      enabled:
-                        description: Whether to enable CI. If enabled, the repository must be enabled as well.
-                        type: boolean
-                        default: false
-                      tool:
-                        description: "The type of the workflow tool. Currently supported: gha (GitHub Actions), none."
-                        type: string
-                        default: gha
-                      runTests:
-                        description: Whether to run tests
-                        type: boolean
-                        default: true
-                      buildImages:
-                        description: Whether to build container images
-                        type: boolean
-                        default: true
-                  kubernetesProviderConfigName:
-                    description: The name of the Kubernetes provider config (used only with compositions with the label location=remote).
-                    type: string
-                    default: default
-                required:
-                - image
-                - tag
+                    default: gha
+                  runTests:
+                    description: Whether to run tests
+                    type: boolean
+                    default: true
+                  buildImages:
+                    description: Whether to build container images
+                    type: boolean
+                    default: true
             required:
-            - id
-            - parameters
+            - image
+            - tag
           status:
             type: object
             properties:

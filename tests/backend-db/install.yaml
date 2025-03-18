@@ -1,18 +1,19 @@
-apiVersion: devopstoolkit.live/v1alpha1
-kind: AppClaim
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
 metadata:
   name: silly-demo-db
 spec:
-  id: backend-db
-  compositionSelector:
-    matchLabels:
-      type: backend
-      location: local
-  parameters:
-    image: ghcr.io/vfarcic/silly-demo
-    tag: "1.4.113"
-    port: 8080
-    host: silly-demo.54.204.223.4.nip.io
-    db:
-      name: my-db-name
-      secret: my-db
+  image: ghcr.io/vfarcic/silly-demo
+  tag: "1.4.113"
+  port: 8080
+  host: silly-demo.54.204.223.4.nip.io
+  db:
+    name: my-db-name
+    secret: my-db
+  crossplane:
+    compositionRef:
+      name: app-backend
+    compositionSelector:
+      matchLabels:
+        type: backend
+        location: local

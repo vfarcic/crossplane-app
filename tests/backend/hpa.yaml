@@ -1,15 +1,9 @@
-apiVersion: devopstoolkit.live/v1alpha1
-kind: AppClaim
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
 metadata:
   name: silly-demo
 spec:
-  id: backend
-  compositionSelector:
-    matchLabels:
-      type: backend
-      location: local
-  parameters:
-    scaling:
-      enabled: true
-      min: 2
-      max: 5
+  scaling:
+    enabled: true
+    min: 2
+    max: 5

@@ -1,18 +1,17 @@
-apiVersion: devopstoolkit.live/v1alpha1
-kind: AppClaim
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
 metadata:
   name: silly-demo
 spec:
-  id: silly-demo
-  compositionSelector:
-    matchLabels:
-      type: backend-db-google
-      location: local
-  parameters:
-    image: c8n.io/vfarcic/silly-demo
-    tag: "1.4.52"
-    port: 8080
-    host: silly-demo.127.0.0.1.nip.io
-    db:
-      version: "14"
-      size: small
+  image: c8n.io/vfarcic/silly-demo
+  tag: "1.4.52"
+  port: 8080
+  host: silly-demo.127.0.0.1.nip.io
+  db:
+    version: "14"
+    size: small
+  crossplane:
+    compositionSelector:
+      matchLabels:
+        type: backend-db-google
+        location: local

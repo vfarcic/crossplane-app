@@ -14,8 +14,6 @@ def --env "main apply crossplane" [
 
     print $"\nInstalling (ansi yellow_bold)Crossplane(ansi reset)...\n"
 
-    mut project_id = ""
-
     helm repo add crossplane https://charts.crossplane.io/stable
 
     helm repo add crossplane-preview https://charts.crossplane.io/preview
@@ -36,151 +34,15 @@ def --env "main apply crossplane" [
             --wait $devel
     )
 
+    mut provider_data = {}
     if $provider == "google" {
-
-        print $"\nInstalling (ansi yellow_bold)Crossplane Google Cloud Provider(ansi reset)...\n"
-
-        if PROJECT_ID in $env {
-            $project_id = $env.PROJECT_ID
-        } else {
-
-            gcloud auth login
-
-            $project_id = $"dot-(date now | format date "%Y%m%d%H%M%S")"
-            $env.PROJECT_ID = $project_id
-            $"export PROJECT_ID=($project_id)\n" | save --append .env
-
-            gcloud projects create $project_id
-
-            start $"https://console.cloud.google.com/billing/enable?project=($project_id)"
-    
-            print $"
-Select the (ansi yellow_bold)Billing account(ansi reset) and press the (ansi yellow_bold)SET ACCOUNT(ansi reset) button.
-Press any key to continue.
-"
-            input
-
-        }
-
-        let sa_name = "devops-toolkit"
-
-        let sa = $"($sa_name)@($project_id).iam.gserviceaccount.com"
-
-        let project = $project_id
-    
-        do --ignore-errors {(
-            gcloud iam service-accounts create $sa_name
-                --project $project
-        )}
-
-        sleep 5sec
-
-        (
-            gcloud projects add-iam-policy-binding
-                --role roles/admin $project_id
-                --member $"serviceAccount:($sa)"
-        )
-    
-        (
-            gcloud iam service-accounts keys
-                create gcp-creds.json --project $project_id
-                --iam-account $sa
-        )
-    
-        (
-            kubectl --namespace crossplane-system
-                create secret generic gcp-creds
-                --from-file creds=./gcp-creds.json
-        )
-
+        $provider_data = setup google
     } else if $provider == "aws" {
-
-        print $"\nInstalling (ansi yellow_bold)Crossplane AWS Provider(ansi reset)...\n"
-
-        if AWS_ACCESS_KEY_ID not-in $env {
-            $env.AWS_ACCESS_KEY_ID = input $"(ansi yellow_bold)Enter AWS Access Key ID: (ansi reset)"
-        }
-        $"export AWS_ACCESS_KEY_ID=($env.AWS_ACCESS_KEY_ID)\n"
-            | save --append .env
-
-        if AWS_SECRET_ACCESS_KEY not-in $env {
-            $env.AWS_SECRET_ACCESS_KEY = input $"(ansi yellow_bold)Enter AWS Secret Access Key: (ansi reset)"
-        }
-        $"export AWS_SECRET_ACCESS_KEY=($env.AWS_SECRET_ACCESS_KEY)\n"
-            | save --append .env
-
-        $"[default]
-aws_access_key_id = ($env.AWS_ACCESS_KEY_ID)
-aws_secret_access_key = ($env.AWS_SECRET_ACCESS_KEY)
-" | save aws-creds.conf --force
-
-        (
-            kubectl --namespace crossplane-system
-                create secret generic aws-creds
-                --from-file creds=./aws-creds.conf
-                --from-literal $"accessKeyID=($env.AWS_ACCESS_KEY_ID)"
-                --from-literal $"secretAccessKey=($env.AWS_SECRET_ACCESS_KEY)"
-        )
-
+        setup aws
     } else if $provider == "azure" {
-
-        print $"\nInstalling (ansi yellow_bold)Crossplane Azure Provider(ansi reset)...\n"
-
-        mut azure_tenant = ""
-        if AZURE_TENANT not-in $env {
-            $azure_tenant = input $"(ansi yellow_bold)Enter Azure Tenant: (ansi reset)"
-        } else {
-            $azure_tenant = $env.AZURE_TENANT
-        }
-        $"export AZURE_TENANT=($azure_tenant)\n"
-            | save --append .env
-        
-        if $skip_login == false {
-            az login --tenant $azure_tenant
-        }
-    
-        let subscription_id = (az account show --query id -o tsv)
-    
-        (
-            az ad sp create-for-rbac --sdk-auth --role Owner
-                --scopes $"/subscriptions/($subscription_id)"
-                | save azure-creds.json --force
-        )
-
-        (
-            kubectl --namespace crossplane-system
-                create secret generic azure-creds
-                --from-file creds=./azure-creds.json
-        )
-
+        setup azure --skip_login $skip_login
     } else if $provider == "upcloud" {
-
-        print $"\nInstalling (ansi yellow_bold)Crossplane UpCloud Provider(ansi reset)...\n"
-
-        if UPCLOUD_USERNAME not-in $env {
-            $env.UPCLOUD_USERNAME = input $"(ansi yellow_bold)UpCloud Username: (ansi reset)"
-        }
-        $"export UPCLOUD_USERNAME=($env.UPCLOUD_USERNAME)\n"
-            | save --append .env
-
-        if UPCLOUD_PASSWORD not-in $env {
-            $env.UPCLOUD_PASSWORD = input $"(ansi yellow_bold)UpCloud Password: (ansi reset)"
-        }
-        $"export UPCLOUD_PASSWORD=($env.UPCLOUD_PASSWORD)\n"
-            | save --append .env
-
-        {
-            apiVersion: "v1"
-            kind: "Secret"
-            metadata: {
-                name: "upcloud-creds"
-            }
-            type: "Opaque"
-            stringData: {
-                creds: $"{\"username\": \"($env.UPCLOUD_USERNAME)\", \"password\": \"($env.UPCLOUD_PASSWORD)\"}"
-            }
-        } | to yaml | kubectl --namespace crossplane-system apply --filename -
-
+        setup upcloud
     }
 
     if $app {
@@ -242,7 +104,7 @@ aws_secret_access_key = ($env.AWS_SECRET_ACCESS_KEY)
 
         if $provider == "google" {
             
-            start $"https://console.cloud.google.com/marketplace/product/google/sqladmin.googleapis.com?project=($project_id)"
+            start $"https://console.cloud.google.com/marketplace/product/google/sqladmin.googleapis.com?project=($provider_data.project_id)"
             
             print $"
 (ansi yellow_bold)ENABLE(ansi reset) the API.
@@ -375,7 +237,7 @@ Press any key to continue.
 
         (
             apply providerconfig $provider
-                --google_project_id $project_id
+                --google_project_id $provider_data.project_id
         )
 
     }
@@ -551,3 +413,158 @@ def "wait crossplane" [] {
 
 }
 
+def "setup google" [] {
+
+    mut project_id = ""
+
+    print $"\nInstalling (ansi yellow_bold)Crossplane Google Cloud Provider(ansi reset)...\n"
+
+    if PROJECT_ID in $env {
+        $project_id = $env.PROJECT_ID
+    } else {
+
+        gcloud auth login
+
+        $project_id = $"dot-(date now | format date "%Y%m%d%H%M%S")"
+        $env.PROJECT_ID = $project_id
+        $"export PROJECT_ID=($project_id)\n" | save --append .env
+
+        gcloud projects create $project_id
+
+        start $"https://console.cloud.google.com/billing/enable?project=($project_id)"
+
+        print $"
+Select the (ansi yellow_bold)Billing account(ansi reset) and press the (ansi yellow_bold)SET ACCOUNT(ansi reset) button.
+Press any key to continue.
+"
+        input
+
+    }
+
+    let sa_name = "devops-toolkit"
+
+    let sa = $"($sa_name)@($project_id).iam.gserviceaccount.com"
+
+    let project = $project_id
+
+    do --ignore-errors {(
+        gcloud iam service-accounts create $sa_name
+            --project $project
+    )}
+
+    sleep 5sec
+
+    (
+        gcloud projects add-iam-policy-binding
+            --role roles/admin $project_id
+            --member $"serviceAccount:($sa)"
+    )
+
+    (
+        gcloud iam service-accounts keys
+            create gcp-creds.json --project $project_id
+            --iam-account $sa
+    )
+
+    (
+        kubectl --namespace crossplane-system
+            create secret generic gcp-creds
+            --from-file creds=./gcp-creds.json
+    )
+
+    { project_id: $project_id }
+
+}
+
+def "setup aws" [] {
+
+    print $"\nInstalling (ansi yellow_bold)Crossplane AWS Provider(ansi reset)...\n"
+
+    if AWS_ACCESS_KEY_ID not-in $env {
+        $env.AWS_ACCESS_KEY_ID = input $"(ansi yellow_bold)Enter AWS Access Key ID: (ansi reset)"
+    }
+    $"export AWS_ACCESS_KEY_ID=($env.AWS_ACCESS_KEY_ID)\n"
+        | save --append .env
+
+    if AWS_SECRET_ACCESS_KEY not-in $env {
+        $env.AWS_SECRET_ACCESS_KEY = input $"(ansi yellow_bold)Enter AWS Secret Access Key: (ansi reset)"
+    }
+    $"export AWS_SECRET_ACCESS_KEY=($env.AWS_SECRET_ACCESS_KEY)\n"
+        | save --append .env
+
+    $"[default]
+aws_access_key_id = ($env.AWS_ACCESS_KEY_ID)
+aws_secret_access_key = ($env.AWS_SECRET_ACCESS_KEY)
+" | save aws-creds.conf --force
+
+    (
+        kubectl --namespace crossplane-system
+            create secret generic aws-creds
+            --from-file creds=./aws-creds.conf
+            --from-literal $"accessKeyID=($env.AWS_ACCESS_KEY_ID)"
+            --from-literal $"secretAccessKey=($env.AWS_SECRET_ACCESS_KEY)"
+    )
+
+}
+
+def "setup azure" [
+    --skip_login = false
+] {
+
+    print $"\nInstalling (ansi yellow_bold)Crossplane Azure Provider(ansi reset)...\n"
+
+    mut azure_tenant = ""
+    if AZURE_TENANT not-in $env {
+        $azure_tenant = input $"(ansi yellow_bold)Enter Azure Tenant: (ansi reset)"
+    } else {
+        $azure_tenant = $env.AZURE_TENANT
+    }
+    $"export AZURE_TENANT=($azure_tenant)\n" | save --append .env
+
+    if $skip_login == false { az login --tenant $azure_tenant }
+
+    let subscription_id = (az account show --query id -o tsv)
+
+    (
+        az ad sp create-for-rbac --sdk-auth --role Owner
+            --scopes $"/subscriptions/($subscription_id)"
+            | save azure-creds.json --force
+    )
+
+    (
+        kubectl --namespace crossplane-system
+            create secret generic azure-creds
+            --from-file creds=./azure-creds.json
+    )
+
+}
+
+def "setup upcloud" [] {
+
+    print $"\nInstalling (ansi yellow_bold)Crossplane UpCloud Provider(ansi reset)...\n"
+
+    if UPCLOUD_USERNAME not-in $env {
+        $env.UPCLOUD_USERNAME = input $"(ansi yellow_bold)UpCloud Username: (ansi reset)"
+    }
+    $"export UPCLOUD_USERNAME=($env.UPCLOUD_USERNAME)\n"
+        | save --append .env
+
+    if UPCLOUD_PASSWORD not-in $env {
+        $env.UPCLOUD_PASSWORD = input $"(ansi yellow_bold)UpCloud Password: (ansi reset)"
+    }
+    $"export UPCLOUD_PASSWORD=($env.UPCLOUD_PASSWORD)\n"
+        | save --append .env
+
+    {
+        apiVersion: "v1"
+        kind: "Secret"
+        metadata: {
+            name: "upcloud-creds"
+        }
+        type: "Opaque"
+        stringData: {
+            creds: $"{\"username\": \"($env.UPCLOUD_USERNAME)\", \"password\": \"($env.UPCLOUD_PASSWORD)\"}"
+        }
+    } | to yaml | kubectl --namespace crossplane-system apply --filename -
+
+}

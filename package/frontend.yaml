@@ -39,18 +39,24 @@ spec:
                         livenessProbe:
                           httpGet:
                             path: "/"
+                          failureThreshold: 10
                         readinessProbe:
                           httpGet:
                             path: "/"
+                          failureThreshold: 10
                         resources:
                           limits:
-                            cpu: "250m"
-                            memory: "256Mi"
+                            memory: 1024Mi
                           requests:
-                            cpu: "125m"
-                            memory: "128Mi"
+                            cpu: 500m
+                            memory: 512Mi
                         env:
                           - name: BACKEND_URL
+            readinessChecks:
+              - type: MatchCondition
+                matchCondition:
+                  type: Available
+                  status: "True"
             patches:
               - type: PatchSet
                 patchSetName: name
@@ -90,6 +96,8 @@ spec:
                 ports:
                   - protocol: TCP
                     name: http
+            readinessChecks:
+              - type: None
             patches:
               - type: PatchSet
                 patchSetName: name
@@ -115,6 +123,8 @@ spec:
                       paths:
                        - path: /
                          pathType: ImplementationSpecific
+            readinessChecks:
+              - type: None
             patches:
               - type: PatchSet
                 patchSetName: name
@@ -130,3 +140,6 @@ spec:
               - type: FromCompositeFieldPath
                 fromFieldPath: spec.port
                 toFieldPath: spec.rules[0].http.paths[0].backend.service.port.number
+              - type: ToCompositeFieldPath
+                fromFieldPath: spec.rules[0].host
+                toFieldPath: status.host

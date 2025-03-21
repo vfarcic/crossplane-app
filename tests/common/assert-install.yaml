@@ -43,10 +43,6 @@ spec:
     spec:
       containers:
       - image: ghcr.io/vfarcic/silly-demo:1.2.3
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
         name: main
         ports:
         - containerPort: 8080
@@ -54,13 +50,12 @@ spec:
           httpGet:
             path: /
             port: 8080
-        resources:
-          limits:
-            cpu: 250m
-            memory: 256Mi
-          requests:
-            cpu: 125m
-            memory: 128Mi
+          failureThreshold: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 10
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

@@ -9,3 +9,9 @@ spec:
       - env:
         - name: BACKEND_URL
           value: http://silly-demo-backend.54.204.223.4.nip.io
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi

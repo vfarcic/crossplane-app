@@ -2,6 +2,7 @@
 
 source  scripts/common.nu
 source  scripts/kubernetes.nu
+source  scripts/ingress.nu
 source  scripts/crossplane.nu
 source  scripts/external-secrets.nu
 
@@ -15,6 +16,8 @@ def "main setup" [
     rm --force .env
 
     main create kubernetes kind
+
+    main apply ingress nginx --provider kind
 
     main apply crossplane --preview $preview
 

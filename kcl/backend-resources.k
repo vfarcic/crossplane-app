@@ -1,10 +1,7 @@
 oxr = option("params").oxr
+ocds = option("params").ocds
 _name = oxr.metadata.name
 _spec = oxr.spec
-dxr = {
-    **oxr
-    status.host = _spec.host
-}
 
 _metadata = lambda name: str, kind: str -> any {
     {
@@ -41,12 +38,14 @@ _items = [
                                 path = "/"
                                 port = _spec.port
                             }
+                            failureThreshold = 10
                         }
                         readinessProbe = {
                             httpGet = {
                                 path = "/"
                                 port = _spec.port
                             }
+                            failureThreshold = 10
                         }
                         resources = {
                             limits = {cpu = "250m", memory = "256Mi" }
@@ -117,7 +116,7 @@ _items = [
             }
             annotations = {
                 "krm.kcl.dev/ready" = "True"
-                "krm.kcl.dev/composition-resource-name" = "{}-ingress".format(name)
+                "krm.kcl.dev/composition-resource-name" = "{}-ingress".format(_name)
                 "ingress.kubernetes.io/ssl-redirect" = "false"
             }
         }
@@ -138,6 +137,9 @@ _items = [
                 }
             }]
         }
+    }, {
+        **oxr
+        status.host = _spec.host
     }
 ]
 

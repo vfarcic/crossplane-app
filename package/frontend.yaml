@@ -1,0 +1,132 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: app-frontend
+  labels:
+    type: frontend
+    location: local
+spec:
+  compositeTypeRef:
+    apiVersion: devopstoolkit.live/v1beta1
+    kind: App
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: crossplane-contrib-function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        patchSets:
+          - name: name
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: metadata.labels["app.kubernetes.io/name"]
+        resources:
+          - name: deployment
+            base:
+              apiVersion: apps/v1
+              kind: Deployment
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: main
+                        livenessProbe:
+                          httpGet:
+                            path: "/"
+                        readinessProbe:
+                          httpGet:
+                            path: "/"
+                        resources:
+                          limits:
+                            cpu: "250m"
+                            memory: "256Mi"
+                          requests:
+                            cpu: "125m"
+                            memory: "128Mi"
+                        env:
+                          - name: BACKEND_URL
+            patches:
+              - type: PatchSet
+                patchSetName: name
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.selector.matchLabels["app.kubernetes.io/name"]
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.template.metadata.labels["app.kubernetes.io/name"]
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.image
+                    - fromFieldPath: spec.tag
+                  strategy: string
+                  string:
+                    fmt: "%s:%s"
+                toFieldPath: spec.template.spec.containers[0].image
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.port
+                toFieldPath: spec.template.spec.containers[0].livenessProbe.httpGet.port
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.port
+                toFieldPath: spec.template.spec.containers[0].readinessProbe.httpGet.port
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.port
+                toFieldPath: spec.template.spec.containers[0].ports[0].containerPort
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.frontend.backendUrl
+                toFieldPath: spec.template.spec.containers[0].env[0].value
+          - name: service
+            base:
+              apiVersion: v1
+              kind: Service
+              spec:
+                type: ClusterIP
+                ports:
+                  - protocol: TCP
+                    name: http
+            patches:
+              - type: PatchSet
+                patchSetName: name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.port
+                toFieldPath: spec.ports[0].port
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.port
+                toFieldPath: spec.ports[0].targetPort
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.selector["app.kubernetes.io/name"]
+          - name: ingress
+            base:
+              apiVersion: networking.k8s.io/v1
+              kind: Ingress
+              metadata:
+                annotations:
+                  ingress.kubernetes.io/ssl-redirect: "false"
+              spec:
+                rules:
+                  - http:
+                      paths:
+                       - path: /
+                         pathType: ImplementationSpecific
+            patches:
+              - type: PatchSet
+                patchSetName: name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.ingressClassName
+                toFieldPath: spec.ingressClassName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.host
+                toFieldPath: spec.rules[0].host
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.rules[0].http.paths[0].backend.service.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.port
+                toFieldPath: spec.rules[0].http.paths[0].backend.service.port.number

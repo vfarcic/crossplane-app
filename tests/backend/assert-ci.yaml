@@ -1,7 +1,7 @@
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  name: silly-demo
+  name: backend
 spec:
   repository:
     enabled: true
@@ -9,22 +9,22 @@ spec:
   ci:
     enabled: true
   # crossplane:
-  #   (resourceRefs[?name == 'silly-demo-branch-ci']):
+  #   (resourceRefs[?name == 'backend-branch-ci']):
   #   - apiVersion: repo.github.upbound.io/v1alpha1
   #     kind: Branch
-  #   (resourceRefs[?name == 'silly-demo-file-gha']):
+  #   (resourceRefs[?name == 'backend-file-gha']):
   #   - apiVersion: repo.github.upbound.io/v1alpha1
   #     kind: RepositoryFile
-  #   (resourceRefs[?name == 'silly-demo-file-dot-nu']):
+  #   (resourceRefs[?name == 'backend-file-dot-nu']):
   #   - apiVersion: repo.github.upbound.io/v1alpha1
   #     kind: RepositoryFile
-  #   (resourceRefs[?name == 'silly-demo-file-devbox']):
+  #   (resourceRefs[?name == 'backend-file-devbox']):
   #   - apiVersion: repo.github.upbound.io/v1alpha1
   #     kind: RepositoryFile
-  #   (resourceRefs[?name == 'silly-demo-file-dockerfile']):
+  #   (resourceRefs[?name == 'backend-file-dockerfile']):
   #   - apiVersion: repo.github.upbound.io/v1alpha1
   #     kind: RepositoryFile
-  #   (resourceRefs[?name == 'silly-demo']):
+  #   (resourceRefs[?name == 'backend']):
   #   - apiVersion: repo.github.upbound.io/v1alpha1
   #     kind: PullRequest
 ---
@@ -32,22 +32,22 @@ apiVersion: repo.github.upbound.io/v1alpha1
 kind: Branch
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: silly-demo-branch-ci
-  name: silly-demo-branch-ci
+    crossplane.io/composition-resource-name: backend-branch-ci
+  name: backend-branch-ci
 spec:
   forProvider:
-    branch: silly-demo-ci
+    branch: backend-ci
     repository: my-repo
 ---
 apiVersion: repo.github.upbound.io/v1alpha1
 kind: RepositoryFile
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: silly-demo-file-gha
-  name: silly-demo-file-gha
+    crossplane.io/composition-resource-name: backend-file-gha
+  name: backend-file-gha
 spec:
   forProvider:
-    branch: silly-demo-ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: .github/workflows/ci.yaml [skip ci]
@@ -103,11 +103,11 @@ apiVersion: repo.github.upbound.io/v1alpha1
 kind: RepositoryFile
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: silly-demo-file-dot-nu
-  name: silly-demo-file-dot-nu
+    crossplane.io/composition-resource-name: backend-file-dot-nu
+  name: backend-file-dot-nu
 spec:
   forProvider:
-    branch: silly-demo-ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: dot.nu [skip ci]
@@ -122,7 +122,7 @@ spec:
       # Runs all CI tasks
       def "main run ci" [
           tag: string # The tag of the image (e.g., 0.0.1)!
-          manifest = "apps/silly-demo.yaml" # The path to the manifest file
+          manifest = "apps/backend.yaml" # The path to the manifest file
           --run_tests = true # Whether to run tests
           --build_images = true # Whether to build images
       ] {
@@ -172,7 +172,7 @@ spec:
       # Updates the composition
       def "main update composition" [
           tag: string # The tag of the image (e.g., 0.0.1)
-          path = "apps/silly-demo.yaml" # The path to the composition file
+          path = "apps/backend.yaml" # The path to the composition file
       ] {
       
           open $path | upsert spec.parameters.tag $tag | save $path --force
@@ -183,11 +183,11 @@ apiVersion: repo.github.upbound.io/v1alpha1
 kind: RepositoryFile
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: silly-demo-file-devbox
-  name: silly-demo-file-devbox
+    crossplane.io/composition-resource-name: backend-file-devbox
+  name: backend-file-devbox
 spec:
   forProvider:
-    branch: silly-demo-ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: devbox-ci.json [skip ci]
@@ -212,11 +212,11 @@ apiVersion: repo.github.upbound.io/v1alpha1
 kind: RepositoryFile
 metadata:
   annotations:
-    crossplane.io/composition-resource-name: silly-demo-file-dockerfile
-  name: silly-demo-file-dockerfile
+    crossplane.io/composition-resource-name: backend-file-dockerfile
+  name: backend-file-dockerfile
 spec:
   forProvider:
-    branch: silly-demo-ci
+    branch: backend-ci
     commitAuthor: Crossplane
     commitEmail: github-provider@crossplane.io
     commitMessage: Dockerfile [skip ci]
@@ -244,11 +244,11 @@ spec:
 apiVersion: repo.github.upbound.io/v1alpha1
 kind: PullRequest
 metadata:
-  name: silly-demo
+  name: backend
 spec:
   forProvider:
     baseRef: main
-    headRef: silly-demo-ci
+    headRef: backend-ci
     body: Review, merge, enjoy.
     title: "CI"
     baseRepository: my-repo

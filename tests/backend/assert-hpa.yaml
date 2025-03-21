@@ -2,7 +2,7 @@
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  name: silly-demo
+  name: backend
 spec:
   scaling:
     min: 2
@@ -11,7 +11,7 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: silly-demo
+  name: backend
 spec:
   minReplicas: 2
   maxReplicas: 5

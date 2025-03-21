@@ -37,6 +37,14 @@ spec:
               ingressClassName:
                 description: The Ingress class name
                 type: string
+                default: contour
+              frontend:
+                type: object
+                description: Frontend-specific configuration
+                properties:
+                  backendUrl:
+                    description: The URL of the backend service
+                    type: string
               db:
                 type: object
                 properties:

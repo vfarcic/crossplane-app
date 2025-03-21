@@ -1,14 +1,14 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  name: backend-db
+  name: frontend
 spec:
   template: true
   bindings:
     - name: name
-      value: backend-db
+      value: frontend
     - name: type
-      value: backend
+      value: frontend
   steps:
     - try:
         - apply:
@@ -19,7 +19,7 @@ spec:
             file: assert-install.yaml
       catch:
         - script:
-            content: kubectl describe app backend-db --namespace $NAMESPACE
+            content: kubectl describe app frontend --namespace $NAMESPACE
         - script:
             content: kubectl get managed
         - script:

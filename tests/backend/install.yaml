@@ -1,7 +1,7 @@
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  name: silly-demo
+  name: backend
 spec:
   image: ghcr.io/vfarcic/silly-demo
   tag: "1.4.113"

@@ -1,7 +1,7 @@
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  name: silly-demo
+  name: backend
 spec:
   ci:
     runTests: false

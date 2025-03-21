@@ -2,7 +2,7 @@
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  name: silly-demo
+  name: ($name)
 spec:
   scaling:
     enabled: true
@@ -11,17 +11,17 @@ spec:
   crossplane:
     (resourceRefs[?kind == 'HorizontalPodAutoscaler']):
     - apiVersion: autoscaling/v2
-      name: silly-demo
+      name: ($name)
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: silly-demo
+  name: ($name)
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: silly-demo
+    name: ($name)
   minReplicas: 1
   maxReplicas: 10
   metrics:

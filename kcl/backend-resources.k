@@ -35,7 +35,7 @@ _items = [
                 spec = {
                     containers = [{
                         image = _spec.image + ":" + _spec.tag
-                        name = _name
+                        name = "main"
                         livenessProbe = {
                             httpGet = {
                                 path = "/"
@@ -119,7 +119,6 @@ _items = [
                 "krm.kcl.dev/ready" = "True"
                 "krm.kcl.dev/composition-resource-name" = "{}-ingress".format(name)
                 "ingress.kubernetes.io/ssl-redirect" = "false"
-                "dev.okteto.com/generate-host" = "true"
             }
         }
         spec = {

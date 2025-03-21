@@ -1,7 +1,7 @@
 ```sh
 devbox shell
 
-task cluster-create
+./dot.nu setup cluster
 
 task test-watch
 

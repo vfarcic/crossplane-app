@@ -8,7 +8,6 @@ source  scripts/external-secrets.nu
 
 def main [] {}
 
-# Creates a local Kubernetes cluster
 def "main setup" [
     --preview = false
 ] {

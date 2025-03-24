@@ -3,3 +3,4 @@
 /.env
 /.task
 /kcl/.kclvm
+/kubeconfig*.yaml

@@ -4,7 +4,7 @@
     "gh@2.69.0",
     "kubectl@1.32.3",
     "bat@0.24.0",
-    "upbound@0.38.1",
+    "upbound@0.38.4",
     "yq-go@4.45.1",
     "go-task@3.41.0",
     "kubernetes-helm@3.17.2",

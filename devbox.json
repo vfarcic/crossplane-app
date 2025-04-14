@@ -10,7 +10,7 @@
     "kubernetes-helm@3.17.2",
     "kyverno-chainsaw@0.2.12",
     "kcl-cli@0.8.9",
-    "crossplane-cli@1.19.0",
+    "crossplane-cli@1.19.1",
     "teller@2.0.7",
     "git@2.48.1"
   ],

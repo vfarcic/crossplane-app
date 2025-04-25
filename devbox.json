@@ -1,12 +1,12 @@
 {
   "packages": [
     "kind@0.27.0",
-    "gh@2.67.0",
-    "kubectl@1.32.2",
-    "upbound@0.37.1",
+    "gh@2.69.0",
+    "kubectl@1.32.3",
+    "upbound@0.38.4",
     "yq-go@4.45.1",
     "go-task@3.41.0",
-    "kubernetes-helm@3.17.1",
+    "kubernetes-helm@3.17.3",
     "kyverno-chainsaw@0.2.12",
     "kcl-cli@0.8.9",
     "teller@2.0.7",

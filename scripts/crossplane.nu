@@ -1,5 +1,11 @@
 #!/usr/bin/env nu
 
+# Installs and configures Crossplane with optional cloud provider setup
+#
+# Examples:
+# > main apply crossplane --provider aws
+# > main apply crossplane --provider google --app
+# > main apply crossplane --provider azure --db --github --github_user user --github_token token
 def --env "main apply crossplane" [
     --provider = none,      # Which provider to use. Available options are `none`, `google`, `aws`, and `azure`
     --app = false,          # Whether to apply DOT App Configuration
@@ -20,19 +26,25 @@ def --env "main apply crossplane" [
 
     helm repo update
 
-    mut chart = "crossplane"
-    mut devel = ""
     if $preview {
-        $chart = "crossplane-preview"
-        $devel = "--devel"
-    }
 
-    (
-        helm upgrade --install crossplane $"($chart)/crossplane"
-            --namespace crossplane-system --create-namespace
-            --set args='{"--enable-usages"}'
-            --wait $devel
-    )
+        (
+            helm upgrade --install crossplane "crossplane-preview/crossplane"
+                --namespace crossplane-system --create-namespace
+                --set args='{"--enable-usages"}'
+                --wait --devel
+        )
+    
+    } else {
+
+        (
+            helm upgrade --install crossplane "crossplane/crossplane"
+                --namespace crossplane-system --create-namespace
+                --set args='{"--enable-usages"}'
+                --wait
+        )
+
+    }
 
     mut provider_data = {}
     if $provider == "google" {
@@ -47,7 +59,7 @@ def --env "main apply crossplane" [
 
     if $app {
 
-        print $"(ansi yellow_bold)Applying `dot-application` Configuration...(ansi reset)"
+        print $"\n(ansi yellow_bold)Applying `dot-application` Configuration...(ansi reset)\n"
 
         {
             apiVersion: "pkg.crossplane.io/v1"
@@ -100,32 +112,34 @@ def --env "main apply crossplane" [
 
     if $db {
 
-        print $"(ansi yellow_bold)Applying `dot-sql` Configuration...(ansi reset)"
+        print $"\n(ansi yellow_bold)Applying `dot-sql` Configuration...(ansi reset)\n"
 
         if $provider == "google" {
             
             start $"https://console.cloud.google.com/marketplace/product/google/sqladmin.googleapis.com?project=($provider_data.project_id)"
             
-            print $"
-(ansi yellow_bold)ENABLE(ansi reset) the API.
-Press any key to continue.
-"
+            print $"\n(ansi yellow_bold)ENABLE(ansi reset) the API.\nPress any key to continue.\n"
             input
 
+        }
+
+        mut dot_sql_version = "v2.1.8"
+        if not $preview {
+            $dot_sql_version = "v1.1.21"
         }
 
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Configuration"
             metadata: { name: "crossplane-sql" }
-            spec: { package: "xpkg.upbound.io/devops-toolkit/dot-sql:v1.1.21" }
+            spec: { package: $"xpkg.upbound.io/devops-toolkit/dot-sql:($dot_sql_version)" }
         } | to yaml | kubectl apply --filename -
 
     }
 
     if $github {
 
-        print $"(ansi yellow_bold)Applying `dot-github` Configuration...(ansi reset)"
+        print $"\n(ansi yellow_bold)Applying `dot-github` Configuration...(ansi reset)\n"
 
         {
             apiVersion: "pkg.crossplane.io/v1"
@@ -137,6 +151,23 @@ Press any key to continue.
     }
 
     if $db or $github {
+
+        {
+            apiVersion: "rbac.authorization.k8s.io/v1"
+            kind: "ClusterRole"
+            metadata: {
+                name: "crossplane-all"
+                labels: {
+                    "rbac.crossplane.io/aggregate-to-crossplane": "true"
+                }
+            }
+            rules: [{
+                apiGroups: ["*"]
+                resources: ["*"]
+                verbs: ["*"]
+            }]
+        } | to yaml | kubectl apply --filename -
+    
 
         {
             apiVersion: "v1"
@@ -222,7 +253,7 @@ Press any key to continue.
             }
         } | to yaml | kubectl apply --filename -
 
-        wait crossplane
+        main wait crossplane
 
         {
             apiVersion: "kubernetes.crossplane.io/v1alpha1"
@@ -235,10 +266,15 @@ Press any key to continue.
 
     if $db and $provider != "none" {
 
-        (
+        if $provider == "google" {
+            (
+                apply providerconfig $provider
+                    --google_project_id $provider_data.project_id
+            )
+        } else {
             apply providerconfig $provider
-                --google_project_id $provider_data.project_id
-        )
+        }
+
 
     }
 
@@ -283,6 +319,11 @@ Press any key to continue.
 
 }
 
+# Deletes Crossplane resources and waits for managed resources to be cleaned up
+#
+# Examples:
+# > main delete crossplane
+# > main delete crossplane --kind AppClaim --name myapp --namespace default
 def "main delete crossplane" [
     --kind: string,
     --name: string,
@@ -293,7 +334,7 @@ def "main delete crossplane" [
         kubectl --namespace $namespace delete $kind $name
     }
 
-    print $"Waiting for (ansi yellow_bold)Crossplane managed resources(ansi reset) to be deleted..."
+    print $"\nWaiting for (ansi yellow_bold)Crossplane managed resources(ansi reset) to be deleted...\n"
     
     mut command = { kubectl get managed --output name }
     if ($name | is-not-empty) {
@@ -306,13 +347,57 @@ def "main delete crossplane" [
     }
 
     mut resources = (do $command)
-    mut counter = ($resources | wc -l | into int) + 1
+    mut counter = ($resources | wc -l | into int)
 
     while $counter > 0 {
         print $"($resources)\nWaiting for remaining (ansi yellow_bold)($counter)(ansi reset) managed resources to be (ansi yellow_bold)removed(ansi reset)...\n"
         sleep 10sec
         $resources = (do $command)
-        $counter = ($resources | wc -l | into int) + 1
+        $counter = ($resources | wc -l | into int)
+    }
+
+}
+
+def "main publish crossplane" [
+    package: string
+    --sources = ["compositions"]
+    --version = ""
+] {
+
+    mut version = $version
+    if $version == "" {
+        $version = $env.VERSION
+    }
+
+    package generate --sources $sources
+
+    crossplane xpkg login --token $env.UP_TOKEN
+
+    (
+        crossplane xpkg build --package-root package
+            --package-file $"($package).xpkg"
+    )
+
+    (
+        crossplane xpkg push --package-files $"($package).xpkg"
+            $"xpkg.upbound.io/($env.UP_ACCOUNT)/dot-($package):($version)"
+    )
+
+    rm --force $"package/($package).xpkg"
+
+    open config.yaml
+        | upsert spec.package $"xpkg.upbound.io/devops-toolkit/dot-($package):($version)"
+        | save config.yaml --force
+
+}
+
+def "package generate" [
+    --sources = ["compositions"]
+] {
+
+    for source in $sources {
+        kcl run $"kcl/($source).k" |
+            save $"package/($source).yaml" --force
     }
 
 }
@@ -399,9 +484,10 @@ def "apply providerconfig" [
 
 }
 
-def "wait crossplane" [] {
+# Waits for all Crossplane providers to be deployed and healthy
+def "main wait crossplane" [] {
 
-    print $"(ansi yellow_bold)Waiting for Crossplane providers to be deployed...(ansi reset)"
+    print $"\n(ansi yellow_bold)Waiting for Crossplane providers to be deployed...(ansi reset)\n"
 
     sleep 60sec
 

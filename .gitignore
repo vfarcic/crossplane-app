@@ -4,3 +4,5 @@
 /.task
 /kcl/.kclvm
 /kubeconfig*.yaml
+/semver
+/application.xpkg

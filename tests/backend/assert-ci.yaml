@@ -1,47 +1,32 @@
----
-apiVersion: devopstoolkit.live/v1alpha1
-kind: AppClaim
-metadata:
-  name: silly-demo
-spec:
-  parameters:
-    repository:
-      enabled: true
-      name: my-repo
-    ci:
-      enabled: true
----
-apiVersion: devopstoolkit.live/v1alpha1
+apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  labels:
-    crossplane.io/claim-name: silly-demo
-    crossplane.io/claim-namespace: ($namespace)
+  name: backend
 spec:
-  parameters:
-    repository:
-      enabled: true
-      name: my-repo
-    ci:
-      enabled: true
-  (resourceRefs[?name == 'backend-branch-ci']):
-  - apiVersion: repo.github.upbound.io/v1alpha1
-    kind: Branch
-  (resourceRefs[?name == 'backend-file-gha']):
-  - apiVersion: repo.github.upbound.io/v1alpha1
-    kind: RepositoryFile
-  (resourceRefs[?name == 'backend-file-dot-nu']):
-  - apiVersion: repo.github.upbound.io/v1alpha1
-    kind: RepositoryFile
-  (resourceRefs[?name == 'backend-file-devbox']):
-  - apiVersion: repo.github.upbound.io/v1alpha1
-    kind: RepositoryFile
-  (resourceRefs[?name == 'backend-file-dockerfile']):
-  - apiVersion: repo.github.upbound.io/v1alpha1
-    kind: RepositoryFile
-  (resourceRefs[?name == 'backend']):
-  - apiVersion: repo.github.upbound.io/v1alpha1
-    kind: PullRequest
+  repository:
+    enabled: true
+    name: my-repo
+  ci:
+    enabled: true
+  # crossplane:
+  #   (resourceRefs[?name == 'backend-branch-ci']):
+  #   - apiVersion: repo.github.upbound.io/v1alpha1
+  #     kind: Branch
+  #   (resourceRefs[?name == 'backend-file-gha']):
+  #   - apiVersion: repo.github.upbound.io/v1alpha1
+  #     kind: RepositoryFile
+  #   (resourceRefs[?name == 'backend-file-dot-nu']):
+  #   - apiVersion: repo.github.upbound.io/v1alpha1
+  #     kind: RepositoryFile
+  #   (resourceRefs[?name == 'backend-file-devbox']):
+  #   - apiVersion: repo.github.upbound.io/v1alpha1
+  #     kind: RepositoryFile
+  #   (resourceRefs[?name == 'backend-file-dockerfile']):
+  #   - apiVersion: repo.github.upbound.io/v1alpha1
+  #     kind: RepositoryFile
+  #   (resourceRefs[?name == 'backend']):
+  #   - apiVersion: repo.github.upbound.io/v1alpha1
+  #     kind: PullRequest
 ---
 apiVersion: repo.github.upbound.io/v1alpha1
 kind: Branch
@@ -150,7 +135,7 @@ spec:
               main build image $tag
           }
 
-          main update claim $tag $manifest
+          main update composition $tag $manifest
       
       }
 
@@ -184,10 +169,10 @@ spec:
 
       }
 
-      # Updates the claim
-      def "main update claim" [
+      # Updates the composition
+      def "main update composition" [
           tag: string # The tag of the image (e.g., 0.0.1)
-          path = "apps/backend.yaml" # The path to the claim file
+          path = "apps/backend.yaml" # The path to the composition file
       ] {
       
           open $path | upsert spec.parameters.tag $tag | save $path --force

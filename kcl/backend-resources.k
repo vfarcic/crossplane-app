@@ -1,273 +1,207 @@
 oxr = option("params").oxr
-_name = oxr.spec.claimRef.name
-_id = oxr.spec.id
-_params = oxr.spec.parameters
-dxr = {
-    **oxr
-    status.host = _params.host
-}
+ocds = option("params").ocds
+_name = oxr.metadata.name
+_spec = oxr.spec
 
-schema providerConfig:
-    _apiVersion: str
-    _suffix: str
-    apiVersion = _apiVersion
-    kind = "ProviderConfig"
-    metadata = {
-        name = _id + "-app"
+_metadata = lambda name: str, kind: str -> any {
+    {
+        name = name
         annotations = {
             "krm.kcl.dev/ready" = "True"
-            "krm.kcl.dev/composition-resource-name" = _id + "-provider-config-" + _suffix
+            "krm.kcl.dev/composition-resource-name" = "{}-{}".format(name, kind)
+        }
+        labels = {
+            "app.kubernetes.io/name" = name
         }
     }
-    spec = {
-        credentials.source = "InjectedIdentity"
-    }
+}
 
 _items = [
-    providerConfig {
-        _apiVersion = "kubernetes.crossplane.io/v1alpha1"
-        _suffix = "kubernetes"
-    } , {
-        apiVersion = "kubernetes.crossplane.io/v1alpha2"
-        kind = "Object"
-        metadata.name = "{}-deployment".format(_id)
+    {
+        apiVersion = "apps/v1"
+        kind = "Deployment"
+        metadata = _metadata(_name, "deployment")
         spec = {
-            forProvider.manifest = {
-                apiVersion = "apps/v1"
-                kind = "Deployment"
-                metadata = {
-                    name = _name
-                    namespace = oxr.spec.claimRef.namespace
-                    labels = {
-                        "app.kubernetes.io/name" = _name
-                    }
-                }
-                spec = {
-                    selector.matchLabels = {
-                        "app.kubernetes.io/name" = _name
-                    }
-                    template = {
-                        metadata.labels = {
-                            "app.kubernetes.io/name" = _name
-                        }
-                        spec = {
-                            containers = [{
-                                image = _params.image + ":" + _params.tag
-                                name = _name
-                                livenessProbe = {
-                                    httpGet = {
-                                        path = "/"
-                                        port = _params.port
-                                    }
-                                }
-                                readinessProbe = {
-                                    httpGet = {
-                                        path = "/"
-                                        port = _params.port
-                                    }
-                                }
-                                resources = {
-                                    limits = {cpu = "250m", memory = "256Mi" }
-                                    requests = {cpu = "125m", memory = "128Mi" }
-                                }
-                                ports = [
-                                    {containerPort = _params.port }
-                                ]
-                                if _params.db?.secret:
-                                    env = [
-                                        {
-                                            name = "DB_ENDPOINT"
-                                            valueFrom.secretKeyRef = {
-                                                key = "endpoint"
-                                                name = _params.db.secret
-                                            }
-                                        }, {
-                                            name = "DB_PASSWORD"
-                                            valueFrom.secretKeyRef = {
-                                                key = "password"
-                                                name = _params.db.secret
-                                            }
-                                        }, {
-                                            name = "DB_PORT"
-                                            valueFrom.secretKeyRef = {
-                                                key = "port"
-                                                name = _params.db.secret
-                                                optional = True
-                                            }
-                                        }, {
-                                            name = "DB_USERNAME"
-                                            valueFrom.secretKeyRef = {
-                                                key = "username"
-                                                name = _params.db.secret
-                                            }
-                                        }, {
-                                            name = "DB_NAME"
-                                            value = _params.db.name
-                                        },
-                                    ]
-                            }]
-                        }
-                    }
-                }
+            selector.matchLabels = {
+                "app.kubernetes.io/name" = _name
             }
-            providerConfigRef.name = _id + "-app"
-        }
-    }, {
-        apiVersion = "kubernetes.crossplane.io/v1alpha2"
-        kind = "Object"
-        metadata.name = "{}-service".format(_id)
-        spec = {
-            forProvider.manifest = {
-                apiVersion = "v1"
-                kind = "Service"
-                metadata = {
-                    name = _name
-                    namespace = oxr.spec.claimRef.namespace
-                    labels = {
-                        "app.kubernetes.io/name" = _name
-                    }
+            template = {
+                metadata.labels = {
+                    "app.kubernetes.io/name" = _name
                 }
                 spec = {
-                    type = "ClusterIP"
-                    ports = [{
-                        port = _params.port
-                        targetPort = _params.port
-                        protocol = "TCP"
-                        name = "http"
-                    }]
-                    selector = {
-                        "app.kubernetes.io/name" = _name
-                    }
-                }
-            }
-            providerConfigRef.name = _id + "-app"
-        }
-    }, {
-        apiVersion = "kubernetes.crossplane.io/v1alpha2"
-        kind = "Object"
-        metadata.name = "{}-ingress".format(_id)
-        spec = {
-            forProvider.manifest = {
-                apiVersion = "networking.k8s.io/v1"
-                kind = "Ingress"
-                metadata = {
-                    name = _name
-                    namespace = oxr.spec.claimRef.namespace
-                    labels = {
-                        "app.kubernetes.io/name" = _name
-                    }
-                    annotations = {
-                        "ingress.kubernetes.io/ssl-redirect" = "false"
-                        "dev.okteto.com/generate-host" = "true"
-                    }
-                }
-                spec = {
-                    if _params.ingressClassName:
-                        ingressClassName = _params.ingressClassName
-                    rules = [{
-                        host = _params.host
-                        http = {
-                            paths = [{
+                    containers = [{
+                        image = _spec.image + ":" + _spec.tag
+                        name = "main"
+                        livenessProbe = {
+                            httpGet = {
                                 path = "/"
-                                pathType = "ImplementationSpecific"
-                                backend.service = {
-                                    name = _name
-                                    port.number = _params.port
-                                }
-                            }]
+                                port = _spec.port
+                            }
+                            failureThreshold = 10
                         }
+                        readinessProbe = {
+                            httpGet = {
+                                path = "/"
+                                port = _spec.port
+                            }
+                            failureThreshold = 10
+                        }
+                        resources = {
+                            limits = {cpu = "250m", memory = "256Mi" }
+                            requests = {cpu = "125m", memory = "128Mi" }
+                        }
+                        ports = [
+                            {containerPort = _spec.port }
+                        ]
+                        if _spec.db?.secret:
+                            env = [
+                                {
+                                    name = "DB_ENDPOINT"
+                                    valueFrom.secretKeyRef = {
+                                        key = "endpoint"
+                                        name = _spec.db.secret
+                                    }
+                                }, {
+                                    name = "DB_PASSWORD"
+                                    valueFrom.secretKeyRef = {
+                                        key = "password"
+                                        name = _spec.db.secret
+                                    }
+                                }, {
+                                    name = "DB_PORT"
+                                    valueFrom.secretKeyRef = {
+                                        key = "port"
+                                        name = _spec.db.secret
+                                        optional = True
+                                    }
+                                }, {
+                                    name = "DB_USERNAME"
+                                    valueFrom.secretKeyRef = {
+                                        key = "username"
+                                        name = _spec.db.secret
+                                    }
+                                }, {
+                                    name = "DB_NAME"
+                                    value = _spec.db.name
+                                },
+                            ]
                     }]
                 }
             }
-            providerConfigRef.name = _id + "-app"
         }
+    }, {
+        apiVersion = "v1"
+        kind = "Service"
+        metadata = _metadata(_name, "service")
+        spec = {
+            type = "ClusterIP"
+            ports = [{
+                port = _spec.port
+                targetPort = _spec.port
+                protocol = "TCP"
+                name = "http"
+            }]
+            selector = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
+    }, {
+        apiVersion = "networking.k8s.io/v1"
+        kind = "Ingress"
+        metadata = {
+            name = _name
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+            annotations = {
+                "krm.kcl.dev/ready" = "True"
+                "krm.kcl.dev/composition-resource-name" = "{}-ingress".format(_name)
+                "ingress.kubernetes.io/ssl-redirect" = "false"
+            }
+        }
+        spec = {
+            if _spec.ingressClassName:
+                ingressClassName = _spec.ingressClassName
+            rules = [{
+                host = _spec.host
+                http = {
+                    paths = [{
+                        path = "/"
+                        pathType = "ImplementationSpecific"
+                        backend.service = {
+                            name = _name
+                            port.number = _spec.port
+                        }
+                    }]
+                }
+            }]
+        }
+    }, {
+        **oxr
+        status.host = _spec.host
     }
 ]
 
-if _params.scaling?.enabled:
+if _spec.scaling?.enabled:
     _items += [{
-        apiVersion = "kubernetes.crossplane.io/v1alpha2"
-        kind = "Object"
-        metadata.name = "{}-hpa".format(_id)
+        apiVersion = "autoscaling/v2"
+        kind = "HorizontalPodAutoscaler"
+        metadata = _metadata(_name, "hpa")
         spec = {
-            forProvider.manifest = {
-                apiVersion = "autoscaling/v2"
-                kind = "HorizontalPodAutoscaler"
-                metadata = {
-                    name = _name
-                    namespace = oxr.spec.claimRef.namespace
-                    labels = {
-                        "app.kubernetes.io/name" = _name
-                    }
-                }
-                spec = {
-                    scaleTargetRef = {
-                        apiVersion = "apps/v1"
-                        kind = "Deployment"
-                        name = _name
-                    }
-                    minReplicas = _params.scaling.min
-                    maxReplicas = _params.scaling.max
-                    metrics = [{
-                        type = "Resource"
-                        resource = {
-                            name = "cpu"
-                            target = {
-                                type = "Utilization"
-                                averageUtilization = 80
-                            }
-                        }
-                    }, {
-                        type = "Resource"
-                        resource = {
-                            name = "memory"
-                            target = {
-                                type = "Utilization"
-                                averageUtilization = 80
-                            }
-                        }
-                    }]
-                }
+            scaleTargetRef = {
+                apiVersion = "apps/v1"
+                kind = "Deployment"
+                name = _name
             }
-            providerConfigRef.name = _id + "-app"
+            minReplicas = _spec.scaling.min
+            maxReplicas = _spec.scaling.max
+            metrics = [{
+                type = "Resource"
+                resource = {
+                    name = "cpu"
+                    target = {
+                        type = "Utilization"
+                        averageUtilization = 80
+                    }
+                }
+            }, {
+                type = "Resource"
+                resource = {
+                    name = "memory"
+                    target = {
+                        type = "Utilization"
+                        averageUtilization = 80
+                    }
+                }
+            }]
         }
     }]
 
-if _params.db?.storeName and _params.db?.secret:
+if _spec.db?.storeName and _spec.db?.secret:
     _items += [{
-        apiVersion = "kubernetes.crossplane.io/v1alpha2"
-        kind = "Object"
-        metadata.name = "{}-external-secret".format(_id)
+        apiVersion = "external-secrets.io/v1beta1"
+        kind = "ExternalSecret"
+        metadata = _metadata(_name, "external-secret")
         spec = {
-            forProvider.manifest = {
-                apiVersion = "external-secrets.io/v1beta1"
-                kind = "ExternalSecret"
-                metadata = {
-                    name = _params.db.secret
-                    namespace: oxr.spec.claimRef.namespace
+            dataFrom = [{
+                extract = {
+                    conversionStrategy = "Default"
+                    decodingStrategy = "None"
+                    key = _spec.db.secret
+                    metadataPolicy = "None"
                 }
-                spec = {
-                    dataFrom = [{
-                        extract = {
-                            conversionStrategy = "Default"
-                            decodingStrategy = "None"
-                            key = _params.db.secret
-                            metadataPolicy = "None"
-                        }
-                    }]
-                    refreshInterval = "1h"
-                    secretStoreRef = {
-                        kind = "ClusterSecretStore"
-                        name = _params.db.storeName
-                    }
-                    target = {
-                        creationPolicy = "Owner"
-                        deletionPolicy = "Retain"
-                        name = _params.db.secret
-                    }
-                }
+            }]
+            refreshInterval = "1h"
+            secretStoreRef = {
+                kind = "ClusterSecretStore"
+                name = _spec.db.storeName
             }
-            providerConfigRef.name = _id + "-app"
+            target = {
+                creationPolicy = "Owner"
+                deletionPolicy = "Retain"
+                name = _spec.db.secret
+            }
         }
     }]
 

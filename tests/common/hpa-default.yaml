@@ -1,7 +1,7 @@
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
 metadata:
-  name: backend
+  name: ($name)
 spec:
-  ci:
-    tool: none
+  scaling:
+    enabled: true

@@ -1,0 +1,97 @@
+---
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
+metadata:
+  name: ($name)
+spec:
+  host: silly-demo.54.204.223.4.nip.io
+  image: ghcr.io/vfarcic/silly-demo
+  tag: "1.2.3"
+  port: 8080
+  crossplane:
+    compositionRef:
+      name: (join('-', ['app', $type]))
+    compositionSelector:
+      matchLabels:
+        location: local
+        type: ($type)
+    resourceRefs:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: ($name)
+    - apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: ($name)
+    - apiVersion: v1
+      kind: Service
+      name: ($name)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: ($name)
+  name: ($name)
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ($name)
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ($name)
+    spec:
+      containers:
+      - image: ghcr.io/vfarcic/silly-demo:1.2.3
+        name: main
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 10
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+  labels:
+    app.kubernetes.io/name: ($name)
+  name: ($name)
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: silly-demo.54.204.223.4.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: ($name)
+            port:
+              number: 8080
+        path: /
+        pathType: ImplementationSpecific
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: ($name)
+  name: ($name)
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: ($name)
+  type: ClusterIP
+

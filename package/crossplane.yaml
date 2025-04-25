@@ -6,8 +6,8 @@ metadata:
     meta.crossplane.io/maintainer: Viktor Farcic (@vfarcic)
     meta.crossplane.io/source: github.com/vfarcic/crossplane-app
     meta.crossplane.io/license: MIT
-    meta.crossplane.io/description: Application types (frontend, backend, backend with a database, etc.)
-    meta.crossplane.io/readme: A Configuration package that defines application types like frontend, backend, backend with a database, etc.
+    meta.crossplane.io/description: Application types (frontend, backend, and backend with a database)
+    meta.crossplane.io/readme: A Configuration package that defines application types like frontend, backend, and backend with a database.
 spec:
   dependsOn:
     - provider: xpkg.upbound.io/crossplane-contrib/provider-upjet-github
@@ -16,3 +16,5 @@ spec:
       version: ">=v0.10.0"
     - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
       version: ">=v0.2.1"
+    - function: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform
+      version: ">=v0.8.2"

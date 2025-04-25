@@ -16,11 +16,11 @@ import template
 #   }
 # }
 oxr = option("params").oxr
-_id = oxr.spec.id
-_params = oxr.spec.parameters
+_name = oxr.metadata.name
+_spec = oxr.spec
 dxr = {
   **oxr
-  status.host = _params.host
+  status.host = _spec.host
 }
 
 schema RepositoryFile:
@@ -33,40 +33,40 @@ schema RepositoryFileSpec:
   forProvider: RepositoryFileForProvider
 
 schema RepositoryFileForProvider:
-  branch = "${_id}-ci"
+  branch = "${_name}-ci"
   commitAuthor = "Crossplane"
   commitEmail = "github-provider@crossplane.io"
   commitMessage = "${file} [skip ci]"
   file: str
   overwriteOnCreate = True
-  repository = _params.repository.name
+  repository = _spec.repository.name
   content: str
 
 _metadata = lambda suffix: str, kind: str -> any {
   {
     if suffix == "":
-      name = _id
+      name = _name
       annotations = {
-        "krm.kcl.dev/composition-resource-name" = _id + "-" + kind
+        "krm.kcl.dev/composition-resource-name" = _name + "-" + kind
       }
     else:
-      name = _id + "-" + kind + "-" + suffix
+      name = _name + "-" + kind + "-" + suffix
       annotations = {
-        "krm.kcl.dev/composition-resource-name" = _id + "-" + kind + "-" + suffix
+        "krm.kcl.dev/composition-resource-name" = _name + "-" + kind + "-" + suffix
       }
   }
 }
 
 _devboxRun = "devbox run --config devbox-ci.json -- ./dot.nu run ci $TAG"
 
-if not _params.ci?.runTests:
+if not _spec.ci?.runTests:
   _devboxRun = _devboxRun + " --run_tests false"
-if not _params.ci?.buildImages:
+if not _spec.ci?.buildImages:
   _devboxRun = _devboxRun + " --build_images false"
 
 _items = []
 
-if _params.ci?.tool == "gha":
+if _spec.ci?.tool == "gha":
   _items += [
     RepositoryFile{
       metadata = _metadata("gha", "file")
@@ -123,15 +123,15 @@ jobs:
     }
   ]
 
-if _params.ci?.enabled and _params.repository?.enabled and _params.repository?.name:
+if _spec.ci?.enabled and _spec.repository?.enabled and _spec.repository?.name:
   _items += [
     {
       apiVersion = "repo.github.upbound.io/v1alpha1"
       kind = "Branch"
       metadata = _metadata("ci", "branch")
       spec.forProvider = {
-        branch = "${_id}-ci"
-        repository = _params.repository.name
+        branch = "${_name}-ci"
+        repository = _spec.repository.name
       }
     },
     RepositoryFile{
@@ -160,7 +160,7 @@ def "main run ci" [
         main build image $tag
     }
 
-    main update claim $tag $manifest
+    main update composition $tag $manifest
 
 }
 
@@ -194,18 +194,18 @@ def "main build image" [
 
 }
 
-\# Updates the claim
-def "main update claim" [
+\# Updates the composition
+def "main update composition" [
     tag: string # The tag of the image (e.g., 0.0.1)
-    path = "apps/{{id}}.yaml" # The path to the claim file
+    path = "apps/{{id}}.yaml" # The path to the composition file
 ] {
 
     open $path | upsert spec.parameters.tag $tag | save $path --force
 
 }
 """, {
-  image: _params.image,
-  id: _id
+  image: _spec.image,
+  id: _name
 }).replace("\#", "#")
         }
       }
@@ -263,10 +263,10 @@ CMD ["app"]
         metadata = _metadata("", "pull-request")
         spec.forProvider = {
             baseRef = "main"
-            headRef = "${_id}-ci"
+            headRef = "${_name}-ci"
             body = "Review, merge, enjoy."
             title = "CI"
-            baseRepository = _params.repository.name
+            baseRepository = _spec.repository.name
         }
     }
   ]

@@ -4,44 +4,53 @@ metadata:
   name: backend
 spec:
   template: true
+  bindings:
+    - name: name
+      value: backend
+    - name: type
+      value: backend
   steps:
-  - try:
-      - apply:
-          file: install.yaml
-      - assert:
-          file: assert-install.yaml
-      - patch:
-          file: hpa-default.yaml
-      - assert:
-          file: assert-hpa-default.yaml
-      - patch:
-          file: hpa.yaml
-      - assert:
-          file: assert-hpa.yaml
-      - patch:
-          file: ci.yaml
-      - assert:
-          file: assert-ci.yaml
-      - patch:
-          file: ci-update.yaml
-      - assert:
-          file: assert-ci-update.yaml
-      - patch:
-          file: ci-tool-none.yaml
-          expect:
-          - match:
-              apiVersion: repo.github.upbound.io/v1alpha1
-              kind: RepositoryFile
-              metadata:
-                name: backend-file-gha
-            check:
-              ($error != null): true
-      - patch:
-          file: pull-secret.yaml
-      - assert:
-          file: assert-pull-secret.yaml
-    catch:
-      - script:
-          content: kubectl describe app --selector crossplane.io/claim-namespace=$NAMESPACE
-      - script:
-          content: kubectl get managed
+    - try:
+        - apply:
+            file: ../common/install.yaml
+        - assert:
+            file: ../common/assert-install.yaml
+        - assert:
+            file: assert-install.yaml
+        - patch:
+            file: ../common/hpa-default.yaml
+        - assert:
+            file: ../common/assert-hpa-default.yaml
+        - patch:
+            file: hpa.yaml
+        - assert:
+            file: assert-hpa.yaml
+        - patch:
+            file: ci.yaml
+        - assert:
+            file: assert-ci.yaml
+        - patch:
+            file: ci-update.yaml
+        - assert:
+            file: assert-ci-update.yaml
+        - patch:
+            file: ci-tool-none.yaml
+            expect:
+              - match:
+                  apiVersion: repo.github.upbound.io/v1alpha1
+                  kind: RepositoryFile
+                  metadata:
+                      name: backend-file-gha
+                check:
+                  ($error != null): true
+        - patch:
+            file: pull-secret.yaml
+        - assert:
+            file: assert-pull-secret.yaml
+      catch:
+        - script:
+            content: kubectl describe app backend --namespace $NAMESPACE
+        - script:
+            content: kubectl get managed
+        - script:
+            content: kubectl get all,ingress --namespace $NAMESPACE

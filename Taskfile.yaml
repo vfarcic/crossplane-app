@@ -13,7 +13,9 @@ tasks:
     cmds:
       - cmd: kubectl apply --filename package/definition.yaml && sleep 1
       - for: [
-          "backend.yaml"        ]
+          "frontend.yaml",
+          "backend.yaml"
+        ]
         cmd: kubectl apply --filename package/{{ .ITEM }}
   package-publish:
     desc: Builds and pushes the package.
@@ -44,6 +46,7 @@ tasks:
     sources:
       - kcl/*.k
       - tests/**/*.yaml
+      - package/frontend.yaml
     generates:
       - package/*.yaml
   test-once:
@@ -66,13 +69,16 @@ tasks:
       - cluster-create-kind
       - helm-repo
     cmds:
-      - helm upgrade --install crossplane crossplane-stable/crossplane --namespace crossplane-system --create-namespace --wait
+      # - helm upgrade --install crossplane crossplane-stable/crossplane --namespace crossplane-system --create-namespace --wait
+      - helm upgrade --install crossplane crossplane-preview/crossplane --namespace crossplane-system --create-namespace --devel --wait
+      - helm repo add external-secrets https://charts.external-secrets.io
+      - helm repo update
+      - helm upgrade --install external-secrets external-secrets/external-secrets --namespace external-secrets --create-namespace --wait
       - for: { var: PROVIDERS }
         cmd: kubectl apply --filename providers/{{ .ITEM }}
       - task: package-apply
       - sleep 6
       - kubectl wait --for=condition=healthy provider.pkg.crossplane.io --all --timeout={{.TIMEOUT}}
-      # - kubectl wait --for=condition=healthy function.pkg.crossplane.io --all --timeout={{.TIMEOUT}}
   cluster-destroy:
     desc: Destroys the cluster
     cmds:
@@ -85,6 +91,7 @@ tasks:
     internal: true
   helm-repo:
     cmds:
-      - helm repo add crossplane-stable https://charts.crossplane.io/stable
+      # - helm repo add crossplane-stable https://charts.crossplane.io/stable
+      - helm repo add crossplane-preview https://charts.crossplane.io/preview
       - helm repo update
     internal: true

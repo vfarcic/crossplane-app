@@ -5,5 +5,7 @@ providers:
       - id: secrets
         path: projects/vfarcic
         keys:
+          upbound-account: UP_ACCOUNT
+          upbound-token: UP_TOKEN
           github-token: GITHUB_TOKEN
           github-user: GITHUB_OWNER

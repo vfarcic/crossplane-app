@@ -180,7 +180,7 @@ if _spec.scaling?.enabled:
 
 if _spec.db?.storeName and _spec.db?.secret:
     _items += [{
-        apiVersion = "external-secrets.io/v1beta1"
+        apiVersion = "external-secrets.io/v1"
         kind = "ExternalSecret"
         metadata = _metadata(_name, "external-secret")
         spec = {

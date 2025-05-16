@@ -26,24 +26,6 @@ spec:
         - assert:
             file: assert-hpa.yaml
         - patch:
-            file: ci.yaml
-        - assert:
-            file: assert-ci.yaml
-        - patch:
-            file: ci-update.yaml
-        - assert:
-            file: assert-ci-update.yaml
-        - patch:
-            file: ci-tool-none.yaml
-            expect:
-              - match:
-                  apiVersion: repo.github.upbound.io/v1alpha1
-                  kind: RepositoryFile
-                  metadata:
-                      name: backend-file-gha
-                check:
-                  ($error != null): true
-        - patch:
             file: pull-secret.yaml
         - assert:
             file: assert-pull-secret.yaml

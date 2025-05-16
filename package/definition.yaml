@@ -72,35 +72,6 @@ spec:
                     description: Maximum number of replicas
                     type: integer
                     default: 10
-              repository:
-                type: object
-                properties:
-                  enabled:
-                    description: Whether to enable a repository
-                    type: boolean
-                    default: false
-                  name:
-                    description: The name of the repository
-                    type: string
-              ci:
-                type: object
-                properties:
-                  enabled:
-                    description: Whether to enable CI. If enabled, the repository must be enabled as well.
-                    type: boolean
-                    default: false
-                  tool:
-                    description: "The type of the workflow tool. Currently supported: gha (GitHub Actions), none."
-                    type: string
-                    default: gha
-                  runTests:
-                    description: Whether to run tests
-                    type: boolean
-                    default: true
-                  buildImages:
-                    description: Whether to build container images
-                    type: boolean
-                    default: true
             required:
             - image
             - tag

@@ -5,7 +5,7 @@
 ```sh
 devbox shell
 
-./dot.nu setup cluster
+./dot.nu setup
 
 task test-watch
 

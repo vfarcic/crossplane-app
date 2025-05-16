@@ -74,6 +74,8 @@ tasks:
       - helm repo add external-secrets https://charts.external-secrets.io
       - helm repo update
       - helm upgrade --install external-secrets external-secrets/external-secrets --namespace external-secrets --create-namespace --wait
+      - kubectl wait --for condition=established crd/externalsecrets.external-secrets.io --timeout=120s
+      - kubectl wait --for condition=established crd/clustersecretstores.external-secrets.io --timeout=120s # Also wait for ClusterSecretStore
       - for: { var: PROVIDERS }
         cmd: kubectl apply --filename providers/{{ .ITEM }}
       - task: package-apply

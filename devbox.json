@@ -2,7 +2,7 @@
   "packages": [
     "kind@0.29.0",
     "gh@2.74.2",
-    "kubectl@1.33.1",
+    "kubectl@1.33.2",
     "upbound@0.39.0",
     "yq-go@4.45.4",
     "go-task@3.43.3",

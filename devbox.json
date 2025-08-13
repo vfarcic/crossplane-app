@@ -5,7 +5,7 @@
     "kubectl@1.33.2",
     "upbound@0.39.0",
     "yq-go@4.45.4",
-    "go-task@3.44.0",
+    "go-task@3.44.1",
     "kubernetes-helm@3.18.3",
     "kyverno-chainsaw@0.2.12",
     "kcl-cli@0.8.9",

@@ -17,7 +17,7 @@ jobs:
       #     sudo mv crossplane /usr/local/bin
       - name: Install Upbound CLI
         run: |
-          curl -sLo up.deb "https://cli.upbound.io/stable/${VERSION}/deb/linux_${ARCH}/up.deb"
+          curl -sL "https://cli.upbound.io" | sh
       - name: Install Devbox
         uses: jetpack-io/devbox-install-action@v0.13.0
         with:

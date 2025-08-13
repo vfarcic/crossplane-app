@@ -374,7 +374,7 @@ def "main publish crossplane" [
     )
 
     (
-        up xpkg push --package-files $"($package).xpkg"
+        up xpkg push
             $"xpkg.upbound.io/($env.UP_ACCOUNT)/dot-($package):($version)"
     )
 

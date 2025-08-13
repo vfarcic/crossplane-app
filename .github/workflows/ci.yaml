@@ -19,7 +19,7 @@ jobs:
         uses: jetpack-io/devbox-install-action@v0.13.0
         with:
           enable-cache: true
-      - name: Test Once
+      - name: Test
         run: devbox run test
       - name: Build the package
         if: github.ref == 'refs/heads/main'

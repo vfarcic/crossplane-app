@@ -370,7 +370,9 @@ def "main publish crossplane" [
 
     up version
 
-    up xpkg build --package-root package
+    up xpkg build --package-root package --output $"($package).xpkg"
+
+    up version
 
     (
         up xpkg push

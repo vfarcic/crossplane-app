@@ -366,9 +366,9 @@ def "main publish crossplane" [
 
     package generate --sources $sources
 
-    up version
-
     up login --token $env.UP_TOKEN
+
+    up version
 
     up xpkg build --package-root package
 

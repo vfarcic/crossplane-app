@@ -366,6 +366,8 @@ def "main publish crossplane" [
 
     package generate --sources $sources
 
+    crossplane version
+
     crossplane xpkg login --token $env.UP_TOKEN
 
     (

@@ -19,7 +19,7 @@ jobs:
         uses: jetpack-io/devbox-install-action@v0.13.0
         with:
           enable-cache: true
-      - name: Test
+      - name: Test Once
         run: |
           ./dot.nu setup
           source .env

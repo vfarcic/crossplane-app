@@ -18,6 +18,7 @@ jobs:
       - name: Install Upbound CLI
         run: |
           curl -sL "https://cli.upbound.io" | sh
+          sudo mv up /usr/local/bin/
       - name: Install Devbox
         uses: jetpack-io/devbox-install-action@v0.13.0
         with:

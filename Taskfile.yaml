@@ -32,9 +32,9 @@ tasks:
   test:
     desc: Combines `./dot.nu setup`, `test-watch` (without the watcher), and `./dot.nu destroy` tasks.
     cmds:
-      - task: ./dot.nu setup
+      - ./dot.nu setup
       - task: test-watch
-      - defer: { task: ./dot.nu destroy }
+      - defer: ./dot.nu destroy
   test-watch:
     desc: Runs tests assuming that the cluster is already created and everything is installed.
     deps:

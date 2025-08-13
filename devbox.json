@@ -22,7 +22,7 @@
       "cluster-create":  ["./dot.nu setup"],
       "cluster-destroy": ["./dot.nu destroy"],
       "package-publish": ["./dot.nu publish crossplane application --sources [\"backend\"]"],
-      "test":            ["./dot.nu setup", "ls -la", ". .env", "task test-once"],
+      "test":            ["./dot.nu setup", "task test-once"],
       "test-watch":      ["task test-watch"]
     }
   }

@@ -55,6 +55,5 @@ tasks:
     deps:
       - task: package-generate
     cmds:
-      - source .env
       - task: package-apply
       - chainsaw test

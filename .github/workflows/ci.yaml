@@ -20,7 +20,10 @@ jobs:
         with:
           enable-cache: true
       - name: Test
-        run: devbox run test
+        run: |
+          ./dot.nu setup
+          source .env
+          task test-once
       - name: Build the package
         if: github.ref == 'refs/heads/main'
         run: |

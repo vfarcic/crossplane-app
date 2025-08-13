@@ -368,10 +368,7 @@ def "main publish crossplane" [
 
     up login --token $env.UP_TOKEN
 
-    (
-        up xpkg build --package-root package
-            --package-file $"($package).xpkg"
-    )
+    up xpkg build --package-root package
 
     (
         up xpkg push

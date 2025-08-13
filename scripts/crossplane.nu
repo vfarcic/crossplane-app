@@ -366,15 +366,15 @@ def "main publish crossplane" [
 
     package generate --sources $sources
 
-    # crossplane xpkg login --token $env.UP_TOKEN
+    up login --token $env.UP_TOKEN
 
     (
-        crossplane xpkg build --package-root package
+        up xpkg build --package-root package
             --package-file $"($package).xpkg"
     )
 
     (
-        crossplane xpkg push --package-files $"($package).xpkg"
+        up xpkg push --package-files $"($package).xpkg"
             $"xpkg.upbound.io/($env.UP_ACCOUNT)/dot-($package):($version)"
     )
 

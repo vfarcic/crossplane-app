@@ -21,18 +21,18 @@ jobs:
           enable-cache: true
       - name: Test
         run: devbox run test
-      - name: Login to Upbound
-        uses: docker/login-action@v3
-        with:
-          registry: xpkg.upbound.io
-          username: ${{ secrets.UP_ACCOUNT }}
-          password: ${{ secrets.UP_TOKEN }}
+      # - name: Login to Upbound
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: xpkg.upbound.io
+      #     username: ${{ secrets.UP_ACCOUNT }}
+      #     password: ${{ secrets.UP_TOKEN }}
       - name: Build the package
         if: github.ref == 'refs/heads/main'
         run: |
           GOBIN=$PWD go install github.com/maykonlsf/semver-cli/cmd/semver@latest
-          # export UP_TOKEN=${{ secrets.UP_TOKEN }}
-          # export UP_ACCOUNT=${{ secrets.UP_ACCOUNT }}
+          export UP_TOKEN=${{ secrets.UP_TOKEN }}
+          export UP_ACCOUNT=${{ secrets.UP_ACCOUNT }}
           export VERSION=$(./semver up release)
           devbox run package-publish
       - name: Commit changes

@@ -11,22 +11,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Install Crossplane CLI
+      # - name: Install Crossplane CLI
+      #   run: |
+      #     curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | sh
+      #     sudo mv crossplane /usr/local/bin
+      - name: Install Upbound CLI
         run: |
-          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | sh
-          sudo mv crossplane /usr/local/bin
+          curl -sLo up.deb "https://cli.upbound.io/stable/${VERSION}/deb/linux_${ARCH}/up.deb"
       - name: Install Devbox
         uses: jetpack-io/devbox-install-action@v0.13.0
         with:
           enable-cache: true
       - name: Test
         run: devbox run test
-      # - name: Login to Upbound
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: xpkg.upbound.io
-      #     username: ${{ secrets.UP_ACCOUNT }}
-      #     password: ${{ secrets.UP_TOKEN }}
       - name: Build the package
         if: github.ref == 'refs/heads/main'
         run: |

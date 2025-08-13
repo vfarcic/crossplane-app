@@ -1,26 +1,28 @@
 {
   "packages": [
     "kind@0.29.0",
-    "gh@2.74.2",
-    "kubectl@1.33.2",
-    "upbound@0.39.0",
-    "yq-go@4.45.4",
-    "go-task@3.44.0",
-    "kubernetes-helm@3.18.3",
+    "gh@2.76.2",
+    "kubectl@1.33.3",
+    "upbound@0.39.1",
+    "yq-go@4.47.1",
+    "go-task@3.44.1",
+    "kubernetes-helm@3.18.4",
     "kyverno-chainsaw@0.2.12",
     "kcl-cli@0.8.9",
     "teller@2.0.7",
-    "git@2.49.0",
+    "git@2.50.1",
     "kubectl-tree@0.4.3",
-    "nushell@0.105.1"
+    "nushell@0.106.1"
   ],
   "shell": {
-    "init_hook": [],
+    "init_hook": [
+      "export PATH=$PATH:$HOME/.npm-global/bin"
+    ],
     "scripts": {
-      "cluster-create":  ["task cluster-create"],
-      "cluster-destroy": ["task cluster-destroy"],
+      "cluster-create":  ["./dot.nu setup"],
+      "cluster-destroy": ["./dot.nu destroy"],
       "package-publish": ["./dot.nu publish crossplane application --sources [\"backend\"]"],
-      "test":            ["task test"],
+      "test":            ["./dot.nu setup", "ls -la", ". .env", "task test-once"],
       "test-watch":      ["task test-watch"]
     }
   }

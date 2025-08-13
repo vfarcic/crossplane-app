@@ -9,7 +9,7 @@ devbox shell
 
 task test-watch
 
-task cluster-destroy
+./dot.nu destroy
 
 exit
 ```

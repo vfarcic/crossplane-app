@@ -13,7 +13,7 @@ jobs:
           fetch-depth: 0
       - name: Install Crossplane CLI
         run: |
-          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | XP_CHANNEL=preview sh
+          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | sh
           sudo mv crossplane /usr/local/bin
       - name: Install Devbox
         uses: jetpack-io/devbox-install-action@v0.13.0

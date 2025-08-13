@@ -8,9 +8,7 @@ source  scripts/external-secrets.nu
 
 def main [] {}
 
-def "main setup" [
-    --preview = false
-] {
+def "main setup" [] {
 
     rm --force .env
 
@@ -18,7 +16,7 @@ def "main setup" [
 
     main apply ingress nginx --provider kind
 
-    main apply crossplane --preview $preview
+    main apply crossplane
 
     print $"Applying (ansi yellow_bold)Crossplane Providers(ansi reset)..."
 

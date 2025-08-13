@@ -17,8 +17,8 @@
   "shell": {
     "init_hook": [],
     "scripts": {
-      "cluster-create":  ["task cluster-create"],
-      "cluster-destroy": ["task cluster-destroy"],
+      "cluster-create":  ["./dot.nu setup"],
+      "cluster-destroy": ["./dot.nu destroy"],
       "package-publish": ["./dot.nu publish crossplane application --sources [\"backend\"]"],
       "test":            ["task test"],
       "test-watch":      ["task test-watch"]

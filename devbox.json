@@ -6,7 +6,7 @@
     "yq-go@4.47.2",
     "go-task@3.44.1",
     "kubernetes-helm@3.19.0",
-    "kyverno-chainsaw@0.2.12",
+    "kyverno-chainsaw@0.2.13",
     "kcl-cli@0.8.9",
     "teller@2.0.7",
     "git@2.51.0",

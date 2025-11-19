@@ -268,51 +268,51 @@
         }
       }
     },
-    "kubectl-tree@0.4.3": {
-      "last_modified": "2025-03-11T17:52:14Z",
-      "resolved": "github:NixOS/nixpkgs/0d534853a55b5d02a4ababa1d71921ce8f0aee4c#kubectl-tree",
+    "kubectl-tree@0.4.6": {
+      "last_modified": "2025-11-17T10:23:24Z",
+      "resolved": "github:NixOS/nixpkgs/8b6600824693a9c706ef09bd86711ca393703466#kubectl-tree",
       "source": "devbox-search",
-      "version": "0.4.3",
+      "version": "0.4.6",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/7d5i8mm44wc7zmabjxrjgiw0l12qnnlz-kubectl-tree-0.4.3",
+              "path": "/nix/store/q0dy4ahbwbsy1bp0m0h507hlj41vr3qp-kubectl-tree-0.4.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/7d5i8mm44wc7zmabjxrjgiw0l12qnnlz-kubectl-tree-0.4.3"
+          "store_path": "/nix/store/q0dy4ahbwbsy1bp0m0h507hlj41vr3qp-kubectl-tree-0.4.6"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/dqhbnynjsqxfmwwq4jb25q3jlfmimqcj-kubectl-tree-0.4.3",
+              "path": "/nix/store/kdk58hdm382kh9mydm66v3vkvxb593wr-kubectl-tree-0.4.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/dqhbnynjsqxfmwwq4jb25q3jlfmimqcj-kubectl-tree-0.4.3"
+          "store_path": "/nix/store/kdk58hdm382kh9mydm66v3vkvxb593wr-kubectl-tree-0.4.6"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/35cl03q2arjnsq4s7g51irsnadxms0ss-kubectl-tree-0.4.3",
+              "path": "/nix/store/m1pnngbvpxwwsjgrlqbjs155pm636791-kubectl-tree-0.4.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/35cl03q2arjnsq4s7g51irsnadxms0ss-kubectl-tree-0.4.3"
+          "store_path": "/nix/store/m1pnngbvpxwwsjgrlqbjs155pm636791-kubectl-tree-0.4.6"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/m0pbc6gw4zdxg8cnwyiylfz21ijkbqwr-kubectl-tree-0.4.3",
+              "path": "/nix/store/7rvnjgwzddix8326xks0nk67wn00fc96-kubectl-tree-0.4.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/m0pbc6gw4zdxg8cnwyiylfz21ijkbqwr-kubectl-tree-0.4.3"
+          "store_path": "/nix/store/7rvnjgwzddix8326xks0nk67wn00fc96-kubectl-tree-0.4.6"
         }
       }
     },

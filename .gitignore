@@ -6,3 +6,4 @@
 /kubeconfig*.yaml
 /semver
 /application.xpkg
+/tmp

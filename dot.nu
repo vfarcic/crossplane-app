@@ -5,6 +5,7 @@ source  scripts/kubernetes.nu
 source  scripts/ingress.nu
 source  scripts/crossplane.nu
 source  scripts/external-secrets.nu
+source  scripts/gateway-api.nu
 
 def main [] {}
 
@@ -12,9 +13,11 @@ def "main setup" [] {
 
     rm --force .env
 
-    main create kubernetes kind
+    main create kubernetes kind --name dot-app
 
     main apply ingress nginx --provider kind
+
+    main apply gateway_api
 
     main apply crossplane
 
@@ -63,6 +66,6 @@ def "main setup" [] {
 
 def "main destroy" [] {
 
-    main destroy kubernetes kind
+    main destroy kubernetes kind --name dot-app
 
 }

@@ -544,51 +544,51 @@
         }
       }
     },
-    "teller@2.0.7": {
-      "last_modified": "2024-11-16T04:25:12Z",
-      "resolved": "github:NixOS/nixpkgs/34a626458d686f1b58139620a8b2793e9e123bba#teller",
+    "vals@0.42.6": {
+      "last_modified": "2025-12-31T03:27:36Z",
+      "resolved": "github:NixOS/nixpkgs/f665af0cdb70ed27e1bd8f9fdfecaf451260fc55#vals",
       "source": "devbox-search",
-      "version": "2.0.7",
+      "version": "0.42.6",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/362vqnhbc0x56ly10j1wxvic0xicv0lr-teller-2.0.7",
+              "path": "/nix/store/b7wxjafb4il13b9lr0nd8k9lda5miy9g-vals-0.42.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/362vqnhbc0x56ly10j1wxvic0xicv0lr-teller-2.0.7"
+          "store_path": "/nix/store/b7wxjafb4il13b9lr0nd8k9lda5miy9g-vals-0.42.6"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/wrsh6xgn25b4qq4la4xikrdpqlx04xhn-teller-2.0.7",
+              "path": "/nix/store/byp1xkjbmrclcs9gh5244y3vraj9s9lg-vals-0.42.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/wrsh6xgn25b4qq4la4xikrdpqlx04xhn-teller-2.0.7"
+          "store_path": "/nix/store/byp1xkjbmrclcs9gh5244y3vraj9s9lg-vals-0.42.6"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/cbhghh4a8r2y4j51f470kh660jwypf0i-teller-2.0.7",
+              "path": "/nix/store/b3iqdxczbgps4lpshffkmk1g7braymyy-vals-0.42.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/cbhghh4a8r2y4j51f470kh660jwypf0i-teller-2.0.7"
+          "store_path": "/nix/store/b3iqdxczbgps4lpshffkmk1g7braymyy-vals-0.42.6"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/mzb9i6n7gjb0j8y8fviykfnv0hs9hin3-teller-2.0.7",
+              "path": "/nix/store/ralcwln869c2v7sr5ldw64dh30nixilv-vals-0.42.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/mzb9i6n7gjb0j8y8fviykfnv0hs9hin3-teller-2.0.7"
+          "store_path": "/nix/store/ralcwln869c2v7sr5ldw64dh30nixilv-vals-0.42.6"
         }
       }
     },

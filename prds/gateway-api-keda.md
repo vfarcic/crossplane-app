@@ -82,7 +82,7 @@ spec:
 
 **Cold start and request handling**: When KEDA scales from zero, there is a window (~15-30s) where no pods are available. During manual testing, we confirmed that Envoy Gateway returns **503 immediately** when there are zero upstream endpoints — it short-circuits before retry logic is engaged, so BackendTrafficPolicy retry/timeout policies **do not help**. This is a fundamental Envoy behavior, not a configuration issue.
 
-**KubeElasti** (CNCF Sandbox) was researched as a solution: it manipulates EndpointSlices to redirect traffic to a resolver proxy during scale-from-zero, queuing requests until pods are ready. It coordinates with KEDA via annotations (pausing/resuming ScaledObject). However, KubeElasti is pre-1.0, uses in-memory queuing (no persistence), and adds operational complexity. Decision on whether to integrate KubeElasti is deferred to a follow-up PRD — for now, cold-start 503s are a documented limitation of the scale-to-zero feature.
+**KubeElasti** (CNCF Sandbox) is the chosen solution: it manipulates EndpointSlices to redirect traffic to a resolver proxy during scale-from-zero, queuing requests until pods are ready. It coordinates with KEDA via annotations (pausing/resuming ScaledObject). The composition will generate an `ElastiService` alongside the ScaledObject when `minReplicas: 0`.
 
 ### Discussion: Which scaling API approach? — **Resolved**
 
@@ -204,6 +204,20 @@ What **won't** transfer:
 - [x] Manual verification: scale-to-zero and scale-from-zero confirmed working in KinD with Envoy Gateway + KEDA + Prometheus
 - [ ] Reconcile Prometheus service URL/namespace with crossplane-kubernetes (currently `http://kube-prometheus-stack-prometheus.prometheus-system:9090`)
 
+### Cold-Start Request Handling (KubeElasti)
+- [x] Investigate Envoy Gateway retry/timeout policies — confirmed NOT viable (Envoy 503s immediately with 0 endpoints)
+- [x] Research KubeElasti (CNCF Sandbox) as cold-start solution
+- [ ] Install KubeElasti in test cluster setup
+- [ ] KCL: Generate `ElastiService` CRD alongside ScaledObject when `minReplicas: 0`
+- [ ] Manual verification: deploy app with scale-to-zero, confirm requests are queued during scale-from-zero instead of 503
+- [ ] Tests: Chainsaw test for ElastiService generation
+- [ ] Feature request to crossplane-kubernetes to install KubeElasti on managed clusters
+
+### Integration with crossplane-kubernetes
+- [ ] Reconcile gateway parentRef name (currently hardcoded `contour`)
+- [ ] Reconcile Prometheus service URL/namespace
+- [ ] Process feature response from crossplane-kubernetes and update composition if needed
+
 ## Dependencies
 
 - **Upstream**: dot-kubernetes installing Envoy Gateway, KEDA, and Prometheus on clusters
@@ -226,4 +240,4 @@ What **won't** transfer:
 | 2026-02-22 | Drop `spec.scaling.type` enum — use `prometheusAddress` presence as signal | Prometheus is the only alternative trigger type; a single-value enum is over-engineering. If future trigger types are added, a `type` field can be introduced then | No `scaling.type` field in XRD; KCL uses `_spec.scaling?.prometheusAddress` presence to select trigger type |
 | 2026-02-22 | Use `envoy_http_downstream_rq_total` instead of `envoy_cluster_upstream_rq_total` | Envoy Gateway only creates backend cluster metrics when pods exist (chicken-and-egg problem at 0 replicas). The downstream listener metric counts requests arriving at the Gateway regardless of backend state | PromQL query changed in KCL and tests; metric is always available even at 0 pods |
 | 2026-02-22 | Envoy Gateway cannot hold requests during scale-from-zero; cold-start 503s are a documented limitation | BackendTrafficPolicy retry/timeout policies do not help because Envoy short-circuits with 503 when there are 0 upstream endpoints — retry logic is never engaged | Cold-start section in PRD corrected; KubeElasti researched as potential solution but deferred to follow-up PRD |
-| 2026-02-22 | Defer KubeElasti integration to follow-up PRD | KubeElasti (CNCF Sandbox) solves cold-start request queuing but is pre-1.0, adds operational complexity (EndpointSlice manipulation, resolver proxy, KEDA coordination via annotations), and uses in-memory queuing without persistence | Scale-to-zero works but with 503s during cold start; documented as known limitation |
+| 2026-02-23 | Integrate KubeElasti into this PRD | Cold-start 503s are unacceptable for production scale-to-zero; KubeElasti is the best available solution (CNCF Sandbox, works at EndpointSlice level, coordinates with KEDA via pause/resume annotations) | New milestone added: install KubeElasti, generate ElastiService in KCL, verify manually, add tests, then request crossplane-kubernetes to install it on managed clusters |

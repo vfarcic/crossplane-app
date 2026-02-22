@@ -3,4 +3,7 @@ kind: App
 metadata:
   name: backend
 spec:
-  minReplicas: 2
+  minReplicas: 3
+  maxReplicas: 5
+  scaling:
+    enabled: true

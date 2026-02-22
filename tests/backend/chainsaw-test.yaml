@@ -4,6 +4,8 @@ metadata:
   name: backend
 spec:
   template: true
+  timeouts:
+    assert: 120s
   bindings:
     - name: name
       value: backend
@@ -25,6 +27,14 @@ spec:
             file: replicas.yaml
         - assert:
             file: assert-replicas.yaml
+        - patch:
+            file: scaling.yaml
+        - assert:
+            file: assert-scaling.yaml
+        - patch:
+            file: scaling-gateway-api.yaml
+        - assert:
+            file: assert-scaling-gateway-api.yaml
         - patch:
             file: pull-secret.yaml
         - assert:

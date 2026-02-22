@@ -6,7 +6,7 @@ metadata:
 spec:
   host: silly-demo.54.204.223.4.nip.io
   image: ghcr.io/vfarcic/silly-demo
-  tag: "1.2.3"
+  tag: "v1.5.235"
   port: 8080
   crossplane:
     compositionRef:
@@ -42,7 +42,7 @@ spec:
         app.kubernetes.io/name: ($name)
     spec:
       containers:
-      - image: ghcr.io/vfarcic/silly-demo:1.2.3
+      - image: ghcr.io/vfarcic/silly-demo:v1.5.235
         name: main
         ports:
         - containerPort: 8080

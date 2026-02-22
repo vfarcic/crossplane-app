@@ -1,0 +1,52 @@
+---
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
+metadata:
+  name: backend
+spec:
+  minReplicas: 3
+  maxReplicas: 5
+  scaling:
+    enabled: true
+  crossplane:
+    resourceRefs:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: backend
+    - apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      name: backend
+    - apiVersion: keda.sh/v1alpha1
+      kind: ScaledObject
+      name: backend
+    - apiVersion: v1
+      kind: Service
+      name: backend
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+spec:
+  scaleTargetRef:
+    name: backend
+  minReplicaCount: 3
+  maxReplicaCount: 5
+  triggers:
+  - type: cpu
+    metricType: Utilization
+    metadata:
+      value: "80"
+  - type: memory
+    metricType: Utilization
+    metadata:
+      value: "80"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+status:
+  readyReplicas: 3

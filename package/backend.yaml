@@ -196,6 +196,36 @@ spec:
                   }
               }]
 
+          if _spec.scaling?.enabled:
+              _items += [{
+                  apiVersion = "keda.sh/v1alpha1"
+                  kind = "ScaledObject"
+                  metadata = _metadata(_name, "scaled-object")
+                  spec = {
+                      scaleTargetRef = {
+                          name = _name
+                      }
+                      minReplicaCount = _spec.minReplicas
+                      maxReplicaCount = _spec.maxReplicas
+                      triggers = [
+                          {
+                              type = "cpu"
+                              metricType = "Utilization"
+                              metadata = {
+                                  value = "80"
+                              }
+                          }
+                          {
+                              type = "memory"
+                              metricType = "Utilization"
+                              metadata = {
+                                  value = "80"
+                              }
+                          }
+                      ]
+                  }
+              }]
+
           if _spec.db?.storeName and _spec.db?.secret:
               _items += [{
                   apiVersion = "external-secrets.io/v1"

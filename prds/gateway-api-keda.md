@@ -61,7 +61,23 @@ spec:
 **Behavior**:
 - `scaling.enabled: false` (default) → Deployment gets `spec.replicas: minReplicas`; `maxReplicas` is ignored
 - `scaling.enabled: true` → Deployment does **not** set `spec.replicas` (KEDA manages replica count); generates a KEDA ScaledObject with CPU and memory triggers using `minReplicas`/`maxReplicas`
-- `minReplicas: 0` → enables scale-to-zero (KEDA handles idle period detection)
+- `minReplicas: 0` → enables scale-to-zero (requires external triggers like Prometheus, queue depth, or HTTP request rate — CPU/memory triggers cannot support this since those metrics require running pods)
+
+### Scale-to-Zero: Metric Source and Cold Start — Open
+
+**Metric source requirement**: Scale-to-zero only works with metrics that are observable without running pods. This rules out not just CPU/memory, but also any Prometheus metric scraped from the application pods themselves (e.g., `rate(http_requests_total[1m])` from the app). The PromQL query must target an **external source** that keeps running at zero replicas:
+
+- **Gateway/ingress metrics** — e.g., `envoy_cluster_upstream_rq_total` from Envoy Gateway, request rate from Nginx ingress. The gateway keeps running regardless of backend pods.
+- **Message broker metrics** — e.g., `rabbitmq_queue_messages`, Kafka consumer lag. The broker tracks pending messages independently.
+- **External service metrics** — e.g., pending jobs in a database, webhook event counts from a separate collector.
+
+**Cold start and request handling**: When KEDA scales from zero and a new request arrives, there is a gap where no pods are available. KEDA itself does not buffer or queue requests during the zero-to-one transition. Options to address this:
+
+1. **KEDA HTTP Add-on** — an interceptor proxy that holds incoming HTTP requests while KEDA scales from 0 to 1, then forwards them once a pod is ready
+2. **Gateway-level request holding** — some Gateway API implementations (e.g., Envoy Gateway) can hold connections during backend scale-up
+3. **Queue-based workloads** — no issue for non-HTTP workloads; messages remain in the queue until a consumer pod appears
+
+For HTTP workloads (the primary use case for dot-application), a request buffering mechanism is required to avoid dropped requests during cold start. Both the metric source and cold-start handling should be addressed as part of the Prometheus/scale-to-zero implementation.
 
 ### Discussion: Which scaling API approach? — **Resolved**
 
@@ -157,17 +173,18 @@ What **won't** transfer:
 - [x] Tests: Verify Deployment replicas set correctly when scaling is disabled
 
 ### Scaling (KEDA — CPU/memory)
-- [ ] KCL: KEDA ScaledObject generation with CPU/memory triggers using `minReplicas`/`maxReplicas`
-- [ ] Tests: KEDA CRDs added to test setup
-- [ ] Tests: KEDA CPU/memory scaling test
-- [ ] Tests: Scale-to-zero (minReplicas: 0) test
-- [ ] Tests: Combined Gateway API routing + KEDA scaling test
+- [x] KCL: KEDA ScaledObject generation with CPU/memory triggers using `minReplicas`/`maxReplicas`
+- [x] Tests: KEDA installed in test setup (full operator via Helm)
+- [x] Tests: KEDA CPU/memory scaling test
+- [~] Tests: Scale-to-zero (minReplicas: 0) test — moved to Prometheus section; KEDA rejects minReplicas: 0 with CPU/memory triggers since those metrics require running pods
+- [x] Tests: Combined Gateway API routing + KEDA scaling test
 
 ### Scaling (KEDA — Prometheus) — Deferred
 - [ ] XRD: Add `prometheus` to `spec.scaling.type` enum
 - [ ] XRD: `spec.scaling.prometheusAddress` field
 - [ ] KCL: KEDA ScaledObject generation with Prometheus trigger
 - [ ] Tests: KEDA Prometheus scaling test
+- [ ] Tests: Scale-to-zero (minReplicas: 0) with Prometheus trigger — scale-to-zero requires external metrics (queue depth, request rate, Prometheus queries) that are observable without running pods; CPU/memory triggers cannot support this
 
 ## Dependencies
 
@@ -185,3 +202,4 @@ What **won't** transfer:
 | 2026-02-22 | Implement KEDA CPU/memory scaling first, defer Prometheus trigger to follow-up | CPU/memory is the core KEDA foundation; Prometheus is a separate trigger type that can be layered on afterward. Keeps scope focused and deliverable | Prometheus-related XRD fields, KCL logic, and tests moved to a deferred section in the progress tracker |
 | 2026-02-22 | Move replica fields to top-level `spec.minReplicas`/`spec.maxReplicas` | Avoids field duplication — `minReplicas` serves as static replica count (scaling off) and scaling floor (scaling on). Keeps `scaling` object focused on *how* to scale, not *how many* | Replaces `spec.scaling.min`/`spec.scaling.max`; Deployment now explicitly sets `spec.replicas`; new "Replicas" task added before KEDA work |
 | 2026-02-22 | Remove HPA entirely, use KEDA ScaledObject as only autoscaling mechanism | dot-kubernetes guarantees KEDA is installed; KEDA ScaledObject with CPU/memory triggers does exactly what HPA does. One scaling path is simpler to maintain and test than two | HPA generation removed from KCL; `scaling.type` field not needed for initial implementation (all scaling goes through KEDA); existing HPA tests replaced with KEDA ScaledObject tests |
+| 2026-02-22 | Defer scale-to-zero test to Prometheus trigger phase | KEDA's admission webhook rejects `minReplicaCount: 0` with CPU/memory triggers because those metrics require running pods to be measurable. Scale-to-zero requires external metrics (queue depth, HTTP request rate, Prometheus queries) that exist independently of the workload | Scale-to-zero test moved from CPU/memory section to Prometheus section; `minReplicas: 0` in XRD remains valid for future use with external triggers |

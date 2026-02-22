@@ -66,12 +66,13 @@ spec:
   scaling:
     enabled: true
     prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+    requestsPerReplica: 100  # each replica handles ~100 req/s before scaling adds another (default: 100)
 ```
 
 **Behavior**:
 - `scaling.enabled: false` (default) → Deployment gets `spec.replicas: minReplicas`; `maxReplicas` is ignored
 - `scaling.enabled: true` (no `prometheusAddress`) → KEDA ScaledObject with CPU and memory triggers using `minReplicas`/`maxReplicas`
-- `scaling.enabled: true` + `scaling.prometheusAddress` set → KEDA ScaledObject with Prometheus trigger querying Envoy Gateway metrics; enables `minReplicas: 0` for scale-to-zero
+- `scaling.enabled: true` + `scaling.prometheusAddress` set → KEDA ScaledObject with Prometheus trigger querying Envoy Gateway metrics; `scaling.requestsPerReplica` controls the trigger threshold (default: 100); enables `minReplicas: 0` for scale-to-zero
 - `minReplicas: 0` requires `scaling.prometheusAddress` — CPU/memory triggers cannot support scale-to-zero since those metrics require running pods
 
 ### Scale-to-Zero: Metric Source and Cold Start — Resolved
@@ -112,6 +113,7 @@ Modify `kcl/backend-resources.k` to:
    - When `scaling.prometheusAddress` is set → generate ScaledObject with Prometheus trigger instead of CPU/memory triggers
    - PromQL query: `sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~"http-.*"}[2m]))` — downstream listener metric observable without running pods
    - `prometheusAddress` specifies the Prometheus server URL
+   - `requestsPerReplica` (default 100) used as Prometheus trigger `threshold` — KEDA calculates desired replicas as `metricValue / threshold`
    - Enables `minReplicas: 0` for scale-to-zero
 
 ### XRD Changes
@@ -121,6 +123,7 @@ Extend `package/definition.yaml` with:
 - `spec.minReplicas` (integer, minimum 0, default 1) — replaces `spec.scaling.min`
 - `spec.maxReplicas` (integer, default 10) — replaces `spec.scaling.max`
 - `spec.scaling.prometheusAddress` (string) — Prometheus server URL; when set, selects Prometheus trigger instead of CPU/memory; required for `minReplicas: 0`
+- `spec.scaling.requestsPerReplica` (integer, default 100) — requests per second each replica can handle; used as KEDA Prometheus trigger threshold; only applies when `prometheusAddress` is set
 - Remove `spec.scaling.min` and `spec.scaling.max` (moved to top level)
 
 ### Backward Compatibility
@@ -203,6 +206,9 @@ What **won't** transfer:
 - [x] Tests: Scale-to-zero test — assert ScaledObject with `minReplicaCount: 0` and Prometheus trigger
 - [x] Manual verification: scale-to-zero and scale-from-zero confirmed working in KinD with Envoy Gateway + KEDA + Prometheus
 - [ ] Reconcile Prometheus service URL/namespace with crossplane-kubernetes (currently `http://kube-prometheus-stack-prometheus.prometheus-system:9090`)
+- [ ] XRD: Add `spec.scaling.requestsPerReplica` field (integer, default 100)
+- [ ] KCL: Use `requestsPerReplica` as Prometheus trigger threshold (currently hardcoded to `"1"`)
+- [ ] Tests: Update Prometheus scaling tests to assert configurable threshold
 
 ### Cold-Start Request Handling (KubeElasti)
 - [x] Investigate Envoy Gateway retry/timeout policies — confirmed NOT viable (Envoy 503s immediately with 0 endpoints)
@@ -241,3 +247,4 @@ What **won't** transfer:
 | 2026-02-22 | Use `envoy_http_downstream_rq_total` instead of `envoy_cluster_upstream_rq_total` | Envoy Gateway only creates backend cluster metrics when pods exist (chicken-and-egg problem at 0 replicas). The downstream listener metric counts requests arriving at the Gateway regardless of backend state | PromQL query changed in KCL and tests; metric is always available even at 0 pods |
 | 2026-02-22 | Envoy Gateway cannot hold requests during scale-from-zero; cold-start 503s are a documented limitation | BackendTrafficPolicy retry/timeout policies do not help because Envoy short-circuits with 503 when there are 0 upstream endpoints — retry logic is never engaged | Cold-start section in PRD corrected; KubeElasti researched as potential solution but deferred to follow-up PRD |
 | 2026-02-23 | Integrate KubeElasti into this PRD | Cold-start 503s are unacceptable for production scale-to-zero; KubeElasti is the best available solution (CNCF Sandbox, works at EndpointSlice level, coordinates with KEDA via pause/resume annotations) | New milestone added: install KubeElasti, generate ElastiService in KCL, verify manually, add tests, then request crossplane-kubernetes to install it on managed clusters |
+| 2026-02-23 | Add `scaling.requestsPerReplica` field (default 100) | Prometheus trigger threshold was hardcoded to `"1"`, meaning KEDA would target 1 replica per req/s — far too aggressive for most applications. Users need to specify how many requests a single replica can handle so KEDA calculates desired replicas correctly (`metricValue / threshold`) | New XRD field `spec.scaling.requestsPerReplica`; KCL uses this as Prometheus trigger threshold; default 100 is reasonable for typical web services |

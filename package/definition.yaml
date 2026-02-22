@@ -34,6 +34,13 @@ spec:
                 description: The host address of the application
                 type: string
                 default: devopstoolkit.live
+              routing:
+                description: "Routing implementation: ingress (default) or gateway-api"
+                type: string
+                enum:
+                  - ingress
+                  - gateway-api
+                default: ingress
               ingressClassName:
                 description: The Ingress class name
                 type: string

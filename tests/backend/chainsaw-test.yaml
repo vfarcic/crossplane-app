@@ -18,6 +18,10 @@ spec:
         - assert:
             file: assert-install.yaml
         - patch:
+            file: gateway-api.yaml
+        - assert:
+            file: assert-gateway-api.yaml
+        - patch:
             file: ../common/hpa-default.yaml
         - assert:
             file: ../common/assert-hpa-default.yaml

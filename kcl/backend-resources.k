@@ -107,6 +107,37 @@ _items = [
             }
         }
     }, {
+        **oxr
+        status.host = _spec.host
+    }
+]
+
+if _spec.routing == "gateway-api":
+    _items += [{
+        apiVersion = "gateway.networking.k8s.io/v1"
+        kind = "HTTPRoute"
+        metadata = _metadata(_name, "httproute")
+        spec = {
+            parentRefs = [{
+                name = "contour"
+            }]
+            hostnames = [_spec.host]
+            rules = [{
+                matches = [{
+                    path = {
+                        type = "PathPrefix"
+                        value = "/"
+                    }
+                }]
+                backendRefs = [{
+                    name = _name
+                    port = _spec.port
+                }]
+            }]
+        }
+    }]
+else:
+    _items += [{
         apiVersion = "networking.k8s.io/v1"
         kind = "Ingress"
         metadata = {
@@ -137,11 +168,7 @@ _items = [
                 }
             }]
         }
-    }, {
-        **oxr
-        status.host = _spec.host
-    }
-]
+    }]
 
 if _spec.scaling?.enabled:
     _items += [{

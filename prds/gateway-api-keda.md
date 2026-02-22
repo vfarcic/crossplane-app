@@ -1,6 +1,6 @@
 # PRD: Gateway API Routing and KEDA Autoscaling
 
-**Status**: Discussion
+**Status**: In Progress
 **Priority**: High
 **Created**: 2026-02-22
 
@@ -84,9 +84,9 @@ spec:
     prometheusAddress: http://prometheus.monitoring:9090  # only if type: prometheus
 ```
 
-### Discussion: Which API approach?
+### Discussion: Which API approach? — **Resolved**
 
-The simpler API is easier to use but less flexible. The trigger-based API mirrors KEDA's native model and avoids having to add new fields for every trigger type. Recommendation: start with the simpler API for this PRD, extend later if users need custom triggers.
+The simpler API is easier to use but less flexible. The trigger-based API mirrors KEDA's native model and avoids having to add new fields for every trigger type. **Decision**: Start with the simpler API (`scaling.type: cpu-memory | prometheus`) for this PRD, extend to trigger-based API later if users need custom triggers.
 
 ## Implementation Approach
 
@@ -156,6 +156,25 @@ What **won't** transfer:
 - vLLM-specific KEDA metrics — different trigger configuration
 - KV-cache-aware load balancing — inference-only concern
 
+## Progress
+
+### Routing (Gateway API)
+- [x] XRD: `spec.routing` enum field (`ingress`, `gateway-api`) with default `ingress`
+- [x] KCL: Conditional HTTPRoute generation when `routing: gateway-api`
+- [x] KCL: Ingress generation preserved as default (backward compatible)
+- [x] Tests: Chainsaw test for gateway-api routing with HTTPRoute assertion
+- [ ] Reconcile gateway parentRef name with crossplane-kubernetes
+
+### Scaling (KEDA)
+- [ ] XRD: `spec.scaling.type` field (`cpu-memory`, `prometheus`)
+- [ ] XRD: Allow `spec.scaling.min: 0` for scale-to-zero
+- [ ] KCL: KEDA ScaledObject generation with CPU/memory triggers
+- [ ] KCL: KEDA ScaledObject generation with Prometheus trigger
+- [ ] Tests: KEDA CPU/memory scaling test
+- [ ] Tests: KEDA Prometheus scaling test
+- [ ] Tests: Scale-to-zero (min: 0) test
+- [ ] Tests: Combined Gateway API routing + KEDA scaling test
+
 ## Dependencies
 
 - **Upstream**: dot-kubernetes installing Envoy Gateway and KEDA on clusters
@@ -165,3 +184,6 @@ What **won't** transfer:
 
 | Date | Decision | Rationale | Impact |
 |------|----------|-----------|--------|
+| 2026-02-22 | Implement Gateway API routing before KEDA scaling | Routing is more self-contained and establishes the KCL conditional resource generation pattern that KEDA work will reuse | Routing track is first priority; KEDA scaling follows |
+| 2026-02-22 | Hardcode gateway parentRef name (`contour`) instead of adding a `gatewayName` XRD field | Minimizes API surface; crossplane-kubernetes Gateway support is being built in parallel and the actual gateway name may change | Follow-up task to reconcile with crossplane-kubernetes once Gateway support lands there |
+| 2026-02-22 | crossplane-app and crossplane-kubernetes Gateway work proceeding in parallel | User is adding Gateway API support to crossplane-kubernetes concurrently | Gateway name in HTTPRoute parentRef may need updating once crossplane-kubernetes work is finalized |

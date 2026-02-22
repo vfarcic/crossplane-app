@@ -80,6 +80,9 @@ spec:
                     description: Whether to enable autoscaling (generates KEDA ScaledObject with CPU/memory triggers)
                     type: boolean
                     default: false
+                  prometheusAddress:
+                    description: Prometheus server URL; when set, uses Prometheus trigger instead of CPU/memory (required for scale-to-zero)
+                    type: string
             required:
             - image
             - tag

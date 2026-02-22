@@ -7,6 +7,7 @@ source  scripts/crossplane.nu
 source  scripts/external-secrets.nu
 source  scripts/gateway-api.nu
 source  scripts/keda.nu
+source  scripts/prometheus.nu
 
 def main [] {}
 
@@ -21,6 +22,8 @@ def "main setup" [] {
     main apply gateway_api
 
     main apply keda
+
+    apply_prometheus
 
     main apply crossplane
 

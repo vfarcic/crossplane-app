@@ -1,0 +1,11 @@
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
+metadata:
+  name: backend
+spec:
+  routing: ingress
+  minReplicas: 2
+  maxReplicas: 10
+  scaling:
+    enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090

@@ -173,6 +173,34 @@ else:
     }]
 
 if _spec.scaling?.enabled:
+    if _spec.minReplicas == 0:
+        assert _spec.scaling?.prometheusAddress, "minReplicas: 0 requires scaling.prometheusAddress (CPU/memory triggers need running pods)"
+    _prom = _spec.scaling?.prometheusAddress
+    _triggers = [
+        {
+            type = "prometheus"
+            metadata = {
+                serverAddress = _prom
+                query = "sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~\"http-.*\"}[2m]))"
+                threshold = "1"
+            }
+        }
+    ] if _prom else [
+        {
+            type = "cpu"
+            metricType = "Utilization"
+            metadata = {
+                value = "80"
+            }
+        }
+        {
+            type = "memory"
+            metricType = "Utilization"
+            metadata = {
+                value = "80"
+            }
+        }
+    ]
     _items += [{
         apiVersion = "keda.sh/v1alpha1"
         kind = "ScaledObject"
@@ -183,22 +211,7 @@ if _spec.scaling?.enabled:
             }
             minReplicaCount = _spec.minReplicas
             maxReplicaCount = _spec.maxReplicas
-            triggers = [
-                {
-                    type = "cpu"
-                    metricType = "Utilization"
-                    metadata = {
-                        value = "80"
-                    }
-                }
-                {
-                    type = "memory"
-                    metricType = "Utilization"
-                    metadata = {
-                        value = "80"
-                    }
-                }
-            ]
+            triggers = _triggers
         }
     }]
 

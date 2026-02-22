@@ -1,0 +1,12 @@
+grafana:
+  ingress:
+    enabled: false
+    ingressClassName: traefik
+    hosts:
+    - grafana.34.73.227.173.nip.io
+prometheus:
+  ingress:
+    enabled: false
+    ingressClassName: traefik
+    hosts:
+    - prometheus.34.73.227.173.nip.io

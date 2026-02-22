@@ -58,30 +58,35 @@ spec:
     enabled: true      # generates KEDA ScaledObject with CPU/memory triggers
 ```
 
+Scale-to-zero with Prometheus trigger:
+```yaml
+spec:
+  minReplicas: 0
+  maxReplicas: 10
+  scaling:
+    enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+```
+
 **Behavior**:
 - `scaling.enabled: false` (default) → Deployment gets `spec.replicas: minReplicas`; `maxReplicas` is ignored
-- `scaling.enabled: true` → Deployment does **not** set `spec.replicas` (KEDA manages replica count); generates a KEDA ScaledObject with CPU and memory triggers using `minReplicas`/`maxReplicas`
-- `minReplicas: 0` → enables scale-to-zero (requires external triggers like Prometheus, queue depth, or HTTP request rate — CPU/memory triggers cannot support this since those metrics require running pods)
+- `scaling.enabled: true` (no `prometheusAddress`) → KEDA ScaledObject with CPU and memory triggers using `minReplicas`/`maxReplicas`
+- `scaling.enabled: true` + `scaling.prometheusAddress` set → KEDA ScaledObject with Prometheus trigger querying Envoy Gateway metrics; enables `minReplicas: 0` for scale-to-zero
+- `minReplicas: 0` requires `scaling.prometheusAddress` — CPU/memory triggers cannot support scale-to-zero since those metrics require running pods
 
-### Scale-to-Zero: Metric Source and Cold Start — Open
+### Scale-to-Zero: Metric Source and Cold Start — Resolved
 
-**Metric source requirement**: Scale-to-zero only works with metrics that are observable without running pods. This rules out not just CPU/memory, but also any Prometheus metric scraped from the application pods themselves (e.g., `rate(http_requests_total[1m])` from the app). The PromQL query must target an **external source** that keeps running at zero replicas:
+**Metric source**: Use KEDA's Prometheus trigger pointing at Envoy Gateway's **downstream listener metrics** (`envoy_http_downstream_rq_total`). The gateway listener runs independently of application pods, so this metric remains observable at zero replicas. Initially we tried `envoy_cluster_upstream_rq_total`, but discovered that Envoy only creates backend cluster metrics when pods exist — a chicken-and-egg problem. The downstream listener metric (`envoy_http_conn_manager_prefix=~"http-.*"`) counts all requests arriving at the Gateway regardless of backend state. This uses the same `ScaledObject` resource as CPU/memory scaling — just a different trigger type — keeping the composition simple.
 
-- **Gateway/ingress metrics** — e.g., `envoy_cluster_upstream_rq_total` from Envoy Gateway, request rate from Nginx ingress. The gateway keeps running regardless of backend pods.
-- **Message broker metrics** — e.g., `rabbitmq_queue_messages`, Kafka consumer lag. The broker tracks pending messages independently.
-- **External service metrics** — e.g., pending jobs in a database, webhook event counts from a separate collector.
+**Why not KEDA HTTP Add-on**: Evaluated and rejected. While actively developed (v0.12.2, Feb 2026), it is beta with the KEDA project explicitly stating it's not recommended for production. More importantly, it introduces architectural complexity: an interceptor proxy in the request path (changing `Gateway → App` to `Gateway → Interceptor → App`), a different CRD (`HTTPScaledObject` instead of `ScaledObject`), and direct interaction with Gateway API routing configuration. The Prometheus approach avoids all of this.
 
-**Cold start and request handling**: When KEDA scales from zero and a new request arrives, there is a gap where no pods are available. KEDA itself does not buffer or queue requests during the zero-to-one transition. Options to address this:
+**Cold start and request handling**: When KEDA scales from zero, there is a window (~15-30s) where no pods are available. During manual testing, we confirmed that Envoy Gateway returns **503 immediately** when there are zero upstream endpoints — it short-circuits before retry logic is engaged, so BackendTrafficPolicy retry/timeout policies **do not help**. This is a fundamental Envoy behavior, not a configuration issue.
 
-1. **KEDA HTTP Add-on** — an interceptor proxy that holds incoming HTTP requests while KEDA scales from 0 to 1, then forwards them once a pod is ready
-2. **Gateway-level request holding** — some Gateway API implementations (e.g., Envoy Gateway) can hold connections during backend scale-up
-3. **Queue-based workloads** — no issue for non-HTTP workloads; messages remain in the queue until a consumer pod appears
-
-For HTTP workloads (the primary use case for dot-application), a request buffering mechanism is required to avoid dropped requests during cold start. Both the metric source and cold-start handling should be addressed as part of the Prometheus/scale-to-zero implementation.
+**KubeElasti** (CNCF Sandbox) was researched as a solution: it manipulates EndpointSlices to redirect traffic to a resolver proxy during scale-from-zero, queuing requests until pods are ready. It coordinates with KEDA via annotations (pausing/resuming ScaledObject). However, KubeElasti is pre-1.0, uses in-memory queuing (no persistence), and adds operational complexity. Decision on whether to integrate KubeElasti is deferred to a follow-up PRD — for now, cold-start 503s are a documented limitation of the scale-to-zero feature.
 
 ### Discussion: Which scaling API approach? — **Resolved**
 
-Start with KEDA ScaledObject as the only autoscaling mechanism (no HPA). The `scaling.type` field will be used later to select trigger types (e.g., Prometheus) but is not needed for the initial CPU/memory implementation.
+Start with KEDA ScaledObject as the only autoscaling mechanism (no HPA). The presence of `scaling.prometheusAddress` selects Prometheus trigger; omitting it defaults to CPU/memory triggers. No `scaling.type` enum needed — Prometheus is currently the only alternative trigger, so a single-value enum would be over-engineering.
 
 ### Discussion: Where do replica fields live? — **Resolved**
 
@@ -103,14 +108,20 @@ Modify `kcl/backend-resources.k` to:
    - ScaledObject targets the Deployment by name
    - `minReplicas`/`maxReplicas` passed to ScaledObject
 
+3. **Prometheus trigger**: Add Prometheus-based scaling for scale-to-zero:
+   - When `scaling.prometheusAddress` is set → generate ScaledObject with Prometheus trigger instead of CPU/memory triggers
+   - PromQL query: `sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~"http-.*"}[2m]))` — downstream listener metric observable without running pods
+   - `prometheusAddress` specifies the Prometheus server URL
+   - Enables `minReplicas: 0` for scale-to-zero
+
 ### XRD Changes
 
 Extend `package/definition.yaml` with:
 - `spec.routing` enum field (`ingress`, `gateway-api`)
 - `spec.minReplicas` (integer, minimum 0, default 1) — replaces `spec.scaling.min`
 - `spec.maxReplicas` (integer, default 10) — replaces `spec.scaling.max`
+- `spec.scaling.prometheusAddress` (string) — Prometheus server URL; when set, selects Prometheus trigger instead of CPU/memory; required for `minReplicas: 0`
 - Remove `spec.scaling.min` and `spec.scaling.max` (moved to top level)
-- Remove `spec.scaling.type` (not needed until Prometheus trigger is added)
 
 ### Backward Compatibility
 
@@ -126,11 +137,14 @@ Extend `package/definition.yaml` with:
 This is designed to be fully testable in a local KinD cluster:
 
 1. Install KEDA and Envoy Gateway via Helm in the test cluster setup
-2. Create a `Gateway` resource with HTTP listener
-3. Deploy a test application via the App XR with `routing: gateway-api`
-4. Assert `HTTPRoute` is created with correct parentRef and backendRef
-5. Deploy with `scaling.enabled: true`
-6. Assert `ScaledObject` is created with correct triggers and target
+2. Install Prometheus (kube-prometheus-stack or similar) for Prometheus trigger tests
+3. Create a `Gateway` resource with HTTP listener
+4. Deploy a test application via the App XR with `routing: gateway-api`
+5. Assert `HTTPRoute` is created with correct parentRef and backendRef
+6. Deploy with `scaling.enabled: true`
+7. Assert `ScaledObject` is created with correct triggers and target
+8. Deploy with `scaling.prometheusAddress` and `minReplicas: 0`
+9. Assert `ScaledObject` is created with Prometheus trigger and `minReplicaCount: 0`
 
 No GPUs, no cloud resources, no inference stack — just standard Kubernetes resources.
 
@@ -140,7 +154,8 @@ No GPUs, no cloud resources, no inference stack — just standard Kubernetes res
 - **Routing: Gateway API** — HTTPRoute generated, Ingress not generated
 - **Replicas: static** — Deployment gets `spec.replicas` from `minReplicas` when scaling disabled
 - **Scaling: KEDA CPU/memory** — ScaledObject with CPU and memory triggers, no `spec.replicas` on Deployment
-- **Scaling: min 0** — ScaledObject with `minReplicaCount: 0`
+- **Scaling: Prometheus trigger** — ScaledObject with Prometheus trigger, correct serverAddress and query
+- **Scaling: scale-to-zero** — ScaledObject with `minReplicaCount: 0` and Prometheus trigger (CPU/memory triggers reject minReplicas: 0)
 - **Combined** — Gateway API routing + KEDA scaling together
 
 ## Lessons for crossplane-inference
@@ -179,16 +194,19 @@ What **won't** transfer:
 - [~] Tests: Scale-to-zero (minReplicas: 0) test — moved to Prometheus section; KEDA rejects minReplicas: 0 with CPU/memory triggers since those metrics require running pods
 - [x] Tests: Combined Gateway API routing + KEDA scaling test
 
-### Scaling (KEDA — Prometheus) — Deferred
-- [ ] XRD: Add `prometheus` to `spec.scaling.type` enum
-- [ ] XRD: `spec.scaling.prometheusAddress` field
-- [ ] KCL: KEDA ScaledObject generation with Prometheus trigger
-- [ ] Tests: KEDA Prometheus scaling test
-- [ ] Tests: Scale-to-zero (minReplicas: 0) with Prometheus trigger — scale-to-zero requires external metrics (queue depth, request rate, Prometheus queries) that are observable without running pods; CPU/memory triggers cannot support this
+### Scaling (KEDA — Prometheus + Scale-to-Zero)
+- [x] XRD: Add `spec.scaling.prometheusAddress` field (string; presence selects Prometheus trigger, required for `minReplicas: 0`)
+- [x] KCL: ScaledObject generation with Prometheus trigger when `prometheusAddress` is set — query uses `envoy_http_downstream_rq_total` downstream listener metric
+- [x] KCL: Validate `minReplicas: 0` requires `scaling.prometheusAddress` (CPU/memory triggers cannot support scale-to-zero)
+- [x] Tests: Install Prometheus (kube-prometheus-stack) in test cluster setup
+- [x] Tests: Prometheus trigger scaling test — assert ScaledObject with correct trigger type, serverAddress, and query
+- [x] Tests: Scale-to-zero test — assert ScaledObject with `minReplicaCount: 0` and Prometheus trigger
+- [x] Manual verification: scale-to-zero and scale-from-zero confirmed working in KinD with Envoy Gateway + KEDA + Prometheus
+- [ ] Reconcile Prometheus service URL/namespace with crossplane-kubernetes (currently `http://kube-prometheus-stack-prometheus.prometheus-system:9090`)
 
 ## Dependencies
 
-- **Upstream**: dot-kubernetes installing Envoy Gateway and KEDA on clusters
+- **Upstream**: dot-kubernetes installing Envoy Gateway, KEDA, and Prometheus on clusters
 - **Downstream**: crossplane-inference combined Gateway + KEDA PRD (will build on patterns established here)
 
 ## Decision Log
@@ -203,3 +221,9 @@ What **won't** transfer:
 | 2026-02-22 | Move replica fields to top-level `spec.minReplicas`/`spec.maxReplicas` | Avoids field duplication — `minReplicas` serves as static replica count (scaling off) and scaling floor (scaling on). Keeps `scaling` object focused on *how* to scale, not *how many* | Replaces `spec.scaling.min`/`spec.scaling.max`; Deployment now explicitly sets `spec.replicas`; new "Replicas" task added before KEDA work |
 | 2026-02-22 | Remove HPA entirely, use KEDA ScaledObject as only autoscaling mechanism | dot-kubernetes guarantees KEDA is installed; KEDA ScaledObject with CPU/memory triggers does exactly what HPA does. One scaling path is simpler to maintain and test than two | HPA generation removed from KCL; `scaling.type` field not needed for initial implementation (all scaling goes through KEDA); existing HPA tests replaced with KEDA ScaledObject tests |
 | 2026-02-22 | Defer scale-to-zero test to Prometheus trigger phase | KEDA's admission webhook rejects `minReplicaCount: 0` with CPU/memory triggers because those metrics require running pods to be measurable. Scale-to-zero requires external metrics (queue depth, HTTP request rate, Prometheus queries) that exist independently of the workload | Scale-to-zero test moved from CPU/memory section to Prometheus section; `minReplicas: 0` in XRD remains valid for future use with external triggers |
+| 2026-02-22 | Bring Prometheus trigger and scale-to-zero into PRD scope (no longer deferred) | Scale-to-zero is a core capability of KEDA-based scaling; deferring it leaves the scaling story incomplete. Prometheus is the production-standard approach for HTTP scale-to-zero with KEDA | Prometheus tasks moved from "Deferred" to active; Prometheus installed in test cluster; new XRD fields `scaling.type` and `scaling.prometheusAddress` added |
+| 2026-02-22 | Use Prometheus trigger for scale-to-zero, reject KEDA HTTP Add-on | KEDA HTTP Add-on is beta (not recommended for production by KEDA project), introduces interceptor proxy in request path changing routing model (`Gateway → Interceptor → App`), uses different CRD (`HTTPScaledObject` vs `ScaledObject`), and complicates Gateway API integration. Prometheus trigger uses the same `ScaledObject`, no proxy, no routing changes, and Envoy Gateway metrics are observable at zero replicas | Prometheus trigger is the sole scale-to-zero mechanism; no `HTTPScaledObject` generation needed; routing composition unchanged |
+| 2026-02-22 | Drop `spec.scaling.type` enum — use `prometheusAddress` presence as signal | Prometheus is the only alternative trigger type; a single-value enum is over-engineering. If future trigger types are added, a `type` field can be introduced then | No `scaling.type` field in XRD; KCL uses `_spec.scaling?.prometheusAddress` presence to select trigger type |
+| 2026-02-22 | Use `envoy_http_downstream_rq_total` instead of `envoy_cluster_upstream_rq_total` | Envoy Gateway only creates backend cluster metrics when pods exist (chicken-and-egg problem at 0 replicas). The downstream listener metric counts requests arriving at the Gateway regardless of backend state | PromQL query changed in KCL and tests; metric is always available even at 0 pods |
+| 2026-02-22 | Envoy Gateway cannot hold requests during scale-from-zero; cold-start 503s are a documented limitation | BackendTrafficPolicy retry/timeout policies do not help because Envoy short-circuits with 503 when there are 0 upstream endpoints — retry logic is never engaged | Cold-start section in PRD corrected; KubeElasti researched as potential solution but deferred to follow-up PRD |
+| 2026-02-22 | Defer KubeElasti integration to follow-up PRD | KubeElasti (CNCF Sandbox) solves cold-start request queuing but is pre-1.0, adds operational complexity (EndpointSlice manipulation, resolver proxy, KEDA coordination via annotations), and uses in-memory queuing without persistence | Scale-to-zero works but with 503s during cold start; documented as known limitation |

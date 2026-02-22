@@ -1,0 +1,43 @@
+---
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
+metadata:
+  name: backend
+spec:
+  minReplicas: 0
+  maxReplicas: 5
+  scaling:
+    enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+  crossplane:
+    resourceRefs:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: backend
+    - apiVersion: keda.sh/v1alpha1
+      kind: ScaledObject
+      name: backend
+    - apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: backend
+    - apiVersion: v1
+      kind: Service
+      name: backend
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: backend
+  labels:
+    app.kubernetes.io/name: backend
+spec:
+  scaleTargetRef:
+    name: backend
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+      query: sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~"http-.*"}[2m]))
+      threshold: "1"

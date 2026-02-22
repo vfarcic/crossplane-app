@@ -36,6 +36,14 @@ spec:
         - assert:
             file: assert-scaling-gateway-api.yaml
         - patch:
+            file: scaling-prometheus.yaml
+        - assert:
+            file: assert-scaling-prometheus.yaml
+        - patch:
+            file: scaling-prometheus-zero.yaml
+        - assert:
+            file: assert-scaling-prometheus-zero.yaml
+        - patch:
             file: pull-secret.yaml
         - assert:
             file: assert-pull-secret.yaml

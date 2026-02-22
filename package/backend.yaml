@@ -238,6 +238,25 @@ spec:
                       triggers = _triggers
                   }
               }]
+              if _spec.minReplicas == 0:
+                  _items += [{
+                      apiVersion = "elasti.truefoundry.com/v1alpha1"
+                      kind = "ElastiService"
+                      metadata = _metadata(_name, "elasti-service")
+                      spec = {
+                          service = _name
+                          minTargetReplicas = 1
+                          scaleTargetRef = {
+                              apiVersion = "apps/v1"
+                              kind = "deployments"
+                              name = _name
+                          }
+                          autoscaler = {
+                              name = _name
+                              type = "keda"
+                          }
+                      }
+                  }]
 
           if _spec.db?.storeName and _spec.db?.secret:
               _items += [{

@@ -207,10 +207,10 @@ What **won't** transfer:
 ### Cold-Start Request Handling (KubeElasti)
 - [x] Investigate Envoy Gateway retry/timeout policies — confirmed NOT viable (Envoy 503s immediately with 0 endpoints)
 - [x] Research KubeElasti (CNCF Sandbox) as cold-start solution
-- [ ] Install KubeElasti in test cluster setup
-- [ ] KCL: Generate `ElastiService` CRD alongside ScaledObject when `minReplicas: 0`
+- [x] Install KubeElasti in test cluster setup
+- [x] KCL: Generate `ElastiService` CRD alongside ScaledObject when `minReplicas: 0`
 - [ ] Manual verification: deploy app with scale-to-zero, confirm requests are queued during scale-from-zero instead of 503
-- [ ] Tests: Chainsaw test for ElastiService generation
+- [x] Tests: Chainsaw test for ElastiService generation
 - [ ] Feature request to crossplane-kubernetes to install KubeElasti on managed clusters
 
 ### Integration with crossplane-kubernetes

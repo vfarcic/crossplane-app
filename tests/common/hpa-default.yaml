@@ -1,7 +1,0 @@
-apiVersion: devopstoolkit.live/v1beta1
-kind: App
-metadata:
-  name: ($name)
-spec:
-  scaling:
-    enabled: true

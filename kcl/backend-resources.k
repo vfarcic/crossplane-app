@@ -22,6 +22,8 @@ _items = [
         kind = "Deployment"
         metadata = _metadata(_name, "deployment")
         spec = {
+            if not _spec.scaling?.enabled:
+                replicas = _spec.minReplicas
             selector.matchLabels = {
                 "app.kubernetes.io/name" = _name
             }
@@ -165,41 +167,6 @@ else:
                             port.number = _spec.port
                         }
                     }]
-                }
-            }]
-        }
-    }]
-
-if _spec.scaling?.enabled:
-    _items += [{
-        apiVersion = "autoscaling/v2"
-        kind = "HorizontalPodAutoscaler"
-        metadata = _metadata(_name, "hpa")
-        spec = {
-            scaleTargetRef = {
-                apiVersion = "apps/v1"
-                kind = "Deployment"
-                name = _name
-            }
-            minReplicas = _spec.scaling.min
-            maxReplicas = _spec.scaling.max
-            metrics = [{
-                type = "Resource"
-                resource = {
-                    name = "cpu"
-                    target = {
-                        type = "Utilization"
-                        averageUtilization = 80
-                    }
-                }
-            }, {
-                type = "Resource"
-                resource = {
-                    name = "memory"
-                    target = {
-                        type = "Utilization"
-                        averageUtilization = 80
-                    }
                 }
             }]
         }

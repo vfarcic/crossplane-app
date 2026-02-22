@@ -46,47 +46,30 @@ Future extensions (not in this PRD):
 - Header-based routing
 - Request mirroring
 
-### Scaling
+### Replicas and Scaling
 
-Replace HPA with KEDA ScaledObject when KEDA-based scaling is requested:
+Replica count and scaling configuration are separated: `minReplicas`/`maxReplicas` live at the top level of `spec`, while `scaling` controls *how* (or whether) autoscaling works.
 
 ```yaml
 spec:
+  minReplicas: 3      # static replica count when scaling disabled; min bound when enabled (default: 1, 0 for scale-to-zero)
+  maxReplicas: 10     # only used when scaling is enabled (default: 10)
   scaling:
-    enabled: true
-    min: 1          # minimum replicas (default: 1, can be 0 for scale-to-zero)
-    max: 10         # maximum replicas (default: 10)
-    triggers:       # optional, defaults to CPU/memory if not specified
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus.monitoring:9090
-        query: sum(rate(http_requests_total{app="my-app"}[2m]))
-        threshold: "100"
-    - type: cpu
-      metadata:
-        value: "80"
+    enabled: true      # generates KEDA ScaledObject with CPU/memory triggers
 ```
 
 **Behavior**:
-- If `triggers` is not specified: generate a KEDA ScaledObject with CPU and memory triggers (same behavior as current HPA, but through KEDA)
-- If `triggers` is specified: use the provided triggers
-- `min: 0` enables scale-to-zero (KEDA handles the idle period detection)
+- `scaling.enabled: false` (default) → Deployment gets `spec.replicas: minReplicas`; `maxReplicas` is ignored
+- `scaling.enabled: true` → Deployment does **not** set `spec.replicas` (KEDA manages replica count); generates a KEDA ScaledObject with CPU and memory triggers using `minReplicas`/`maxReplicas`
+- `minReplicas: 0` → enables scale-to-zero (KEDA handles idle period detection)
 
-**Alternative (simpler) API** — if full trigger customization is too much:
+### Discussion: Which scaling API approach? — **Resolved**
 
-```yaml
-spec:
-  scaling:
-    enabled: true
-    min: 1
-    max: 10
-    type: cpu-memory | prometheus  # default: cpu-memory
-    prometheusAddress: http://prometheus.monitoring:9090  # only if type: prometheus
-```
+Start with KEDA ScaledObject as the only autoscaling mechanism (no HPA). The `scaling.type` field will be used later to select trigger types (e.g., Prometheus) but is not needed for the initial CPU/memory implementation.
 
-### Discussion: Which API approach? — **Resolved**
+### Discussion: Where do replica fields live? — **Resolved**
 
-The simpler API is easier to use but less flexible. The trigger-based API mirrors KEDA's native model and avoids having to add new fields for every trigger type. **Decision**: Start with the simpler API (`scaling.type: cpu-memory | prometheus`) for this PRD, extend to trigger-based API later if users need custom triggers.
+`minReplicas` and `maxReplicas` are top-level `spec` fields rather than nested under `scaling`. This avoids field duplication: `minReplicas` serves as both the static replica count (scaling off) and the scaling floor (scaling on). The `scaling` object is purely about *how* to scale, not *how many*.
 
 ## Implementation Approach
 
@@ -98,24 +81,27 @@ Modify `kcl/backend-resources.k` to:
    - `routing: ingress` (or unset) → generate `Ingress` (current behavior)
    - `routing: gateway-api` → generate `HTTPRoute` referencing the default `Gateway`
 
-2. **Scaling**: Replace HPA generation with KEDA ScaledObject:
-   - When `scaling.enabled: true` → generate `keda.sh/v1alpha1 ScaledObject`
+2. **Scaling**: Replace HPA with KEDA ScaledObject:
+   - Remove HPA generation entirely
+   - When `scaling.enabled: true` → generate `keda.sh/v1alpha1 ScaledObject` with CPU and memory triggers
    - ScaledObject targets the Deployment by name
-   - Triggers derived from `scaling.type` or `scaling.triggers`
-   - Remove HPA generation (or keep as fallback when KEDA is not available)
+   - `minReplicas`/`maxReplicas` passed to ScaledObject
 
 ### XRD Changes
 
 Extend `package/definition.yaml` with:
 - `spec.routing` enum field (`ingress`, `gateway-api`)
-- `spec.scaling.type` or `spec.scaling.triggers` (depending on API choice)
-- `spec.scaling.min` allowing value `0` (currently minimum is 1)
+- `spec.minReplicas` (integer, minimum 0, default 1) — replaces `spec.scaling.min`
+- `spec.maxReplicas` (integer, default 10) — replaces `spec.scaling.max`
+- Remove `spec.scaling.min` and `spec.scaling.max` (moved to top level)
+- Remove `spec.scaling.type` (not needed until Prometheus trigger is added)
 
 ### Backward Compatibility
 
 - Default `routing` to `ingress` — existing XRs continue to work unchanged
-- Default `scaling.type` to `cpu-memory` — existing scaling behavior preserved
-- HPA-based scaling could remain as fallback for clusters without KEDA
+- Default `minReplicas: 1` and `maxReplicas: 10` — matches current scaling defaults
+- HPA removed entirely — `scaling.enabled: true` now generates KEDA ScaledObject instead of HPA (requires KEDA on cluster, guaranteed by dot-kubernetes)
+- Deployment now explicitly sets `spec.replicas` from `minReplicas` when scaling is disabled (previously relied on Kubernetes default)
 
 ## Testing
 
@@ -136,9 +122,8 @@ No GPUs, no cloud resources, no inference stack — just standard Kubernetes res
 
 - **Routing: Ingress (default)** — existing behavior, no regression
 - **Routing: Gateway API** — HTTPRoute generated, Ingress not generated
-- **Scaling: HPA fallback** — when KEDA is not available (or explicitly requested)
-- **Scaling: KEDA CPU/memory** — ScaledObject with CPU and memory triggers
-- **Scaling: KEDA Prometheus** — ScaledObject with Prometheus trigger
+- **Replicas: static** — Deployment gets `spec.replicas` from `minReplicas` when scaling disabled
+- **Scaling: KEDA CPU/memory** — ScaledObject with CPU and memory triggers, no `spec.replicas` on Deployment
 - **Scaling: min 0** — ScaledObject with `minReplicaCount: 0`
 - **Combined** — Gateway API routing + KEDA scaling together
 
@@ -146,7 +131,7 @@ No GPUs, no cloud resources, no inference stack — just standard Kubernetes res
 
 This PRD explicitly serves as a precursor to the inference-specific implementation. Key transferable patterns:
 
-- **KCL patterns for conditional resource generation** (Ingress vs HTTPRoute, HPA vs ScaledObject)
+- **KCL patterns for conditional resource generation** (Ingress vs HTTPRoute, KEDA ScaledObject)
 - **XRD design for routing and scaling options** — the inference XRD will mirror this API structure
 - **Testing approach** — KEDA and Envoy Gateway in KinD without cloud dependencies
 - **ScaledObject composition** — how to target operator-managed Deployments
@@ -165,15 +150,24 @@ What **won't** transfer:
 - [x] Tests: Chainsaw test for gateway-api routing with HTTPRoute assertion
 - [ ] Reconcile gateway parentRef name with crossplane-kubernetes
 
-### Scaling (KEDA)
-- [ ] XRD: `spec.scaling.type` field (`cpu-memory`, `prometheus`)
-- [ ] XRD: Allow `spec.scaling.min: 0` for scale-to-zero
-- [ ] KCL: KEDA ScaledObject generation with CPU/memory triggers
-- [ ] KCL: KEDA ScaledObject generation with Prometheus trigger
+### Replicas
+- [x] XRD: Move replica fields to `spec.minReplicas` (min 0, default 1) and `spec.maxReplicas` (default 10); remove `spec.scaling.min`/`spec.scaling.max`
+- [x] KCL: Set Deployment `spec.replicas` from `minReplicas` when scaling is disabled
+- [x] KCL: Remove HPA generation entirely
+- [x] Tests: Verify Deployment replicas set correctly when scaling is disabled
+
+### Scaling (KEDA — CPU/memory)
+- [ ] KCL: KEDA ScaledObject generation with CPU/memory triggers using `minReplicas`/`maxReplicas`
+- [ ] Tests: KEDA CRDs added to test setup
 - [ ] Tests: KEDA CPU/memory scaling test
-- [ ] Tests: KEDA Prometheus scaling test
-- [ ] Tests: Scale-to-zero (min: 0) test
+- [ ] Tests: Scale-to-zero (minReplicas: 0) test
 - [ ] Tests: Combined Gateway API routing + KEDA scaling test
+
+### Scaling (KEDA — Prometheus) — Deferred
+- [ ] XRD: Add `prometheus` to `spec.scaling.type` enum
+- [ ] XRD: `spec.scaling.prometheusAddress` field
+- [ ] KCL: KEDA ScaledObject generation with Prometheus trigger
+- [ ] Tests: KEDA Prometheus scaling test
 
 ## Dependencies
 
@@ -188,3 +182,6 @@ What **won't** transfer:
 | 2026-02-22 | Hardcode gateway parentRef name (`contour`) instead of adding a `gatewayName` XRD field | Minimizes API surface; crossplane-kubernetes Gateway support is being built in parallel and the actual gateway name may change | Follow-up task to reconcile with crossplane-kubernetes once Gateway support lands there |
 | 2026-02-22 | crossplane-app and crossplane-kubernetes Gateway work proceeding in parallel | User is adding Gateway API support to crossplane-kubernetes concurrently | Gateway name in HTTPRoute parentRef may need updating once crossplane-kubernetes work is finalized |
 | 2026-02-22 | Add Gateway API CRDs to test setup and rename KinD cluster to `dot-app` | CRDs required for Crossplane to create HTTPRoute resources; unique cluster name avoids conflicts with parallel projects | Gateway API routing tests now verified end-to-end in KinD |
+| 2026-02-22 | Implement KEDA CPU/memory scaling first, defer Prometheus trigger to follow-up | CPU/memory is the core KEDA foundation; Prometheus is a separate trigger type that can be layered on afterward. Keeps scope focused and deliverable | Prometheus-related XRD fields, KCL logic, and tests moved to a deferred section in the progress tracker |
+| 2026-02-22 | Move replica fields to top-level `spec.minReplicas`/`spec.maxReplicas` | Avoids field duplication — `minReplicas` serves as static replica count (scaling off) and scaling floor (scaling on). Keeps `scaling` object focused on *how* to scale, not *how many* | Replaces `spec.scaling.min`/`spec.scaling.max`; Deployment now explicitly sets `spec.replicas`; new "Replicas" task added before KEDA work |
+| 2026-02-22 | Remove HPA entirely, use KEDA ScaledObject as only autoscaling mechanism | dot-kubernetes guarantees KEDA is installed; KEDA ScaledObject with CPU/memory triggers does exactly what HPA does. One scaling path is simpler to maintain and test than two | HPA generation removed from KCL; `scaling.type` field not needed for initial implementation (all scaling goes through KEDA); existing HPA tests replaced with KEDA ScaledObject tests |

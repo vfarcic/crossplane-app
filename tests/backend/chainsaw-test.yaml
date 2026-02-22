@@ -22,13 +22,9 @@ spec:
         - assert:
             file: assert-gateway-api.yaml
         - patch:
-            file: ../common/hpa-default.yaml
+            file: replicas.yaml
         - assert:
-            file: ../common/assert-hpa-default.yaml
-        - patch:
-            file: hpa.yaml
-        - assert:
-            file: assert-hpa.yaml
+            file: assert-replicas.yaml
         - patch:
             file: pull-secret.yaml
         - assert:

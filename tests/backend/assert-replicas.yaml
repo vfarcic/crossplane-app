@@ -1,0 +1,14 @@
+---
+apiVersion: devopstoolkit.live/v1beta1
+kind: App
+metadata:
+  name: backend
+spec:
+  minReplicas: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 3

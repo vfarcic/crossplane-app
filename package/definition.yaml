@@ -64,21 +64,22 @@ spec:
                   name:
                     description: The name of the database.
                     type: string
+              minReplicas:
+                description: Number of replicas when scaling is disabled, or minimum replicas when scaling is enabled (0 enables scale-to-zero with KEDA)
+                type: integer
+                minimum: 0
+                default: 1
+              maxReplicas:
+                description: Maximum number of replicas (only used when scaling is enabled)
+                type: integer
+                default: 10
               scaling:
                 type: object
                 properties:
                   enabled:
-                    description: Whether to enable scaling
+                    description: Whether to enable autoscaling (generates KEDA ScaledObject with CPU/memory triggers)
                     type: boolean
                     default: false
-                  min:
-                    description: Minimum number of replicas
-                    type: integer
-                    default: 1
-                  max:
-                    description: Maximum number of replicas
-                    type: integer
-                    default: 10
             required:
             - image
             - tag

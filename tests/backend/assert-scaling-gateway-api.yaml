@@ -30,7 +30,8 @@ metadata:
   name: backend
 spec:
   parentRefs:
-  - name: contour
+  - name: eg
+    namespace: envoy-gateway-system
   hostnames:
   - silly-demo.54.204.223.4.nip.io
 ---

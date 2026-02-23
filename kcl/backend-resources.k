@@ -122,7 +122,8 @@ if _spec.routing == "gateway-api":
         metadata = _metadata(_name, "httproute")
         spec = {
             parentRefs = [{
-                name = "contour"
+                name = "eg"
+                namespace = "envoy-gateway-system"
             }]
             hostnames = [_spec.host]
             rules = [{

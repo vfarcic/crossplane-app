@@ -8,7 +8,7 @@ source  scripts/external-secrets.nu
 source  scripts/gateway-api.nu
 source  scripts/keda.nu
 source  scripts/prometheus.nu
-source  scripts/kubeelasti.nu
+source  scripts/keda-http-addon.nu
 
 def main [] {}
 
@@ -26,7 +26,7 @@ def "main setup" [] {
 
     apply_prometheus
 
-    main apply kubeelasti
+    main apply keda_http_addon
 
     main apply crossplane
 

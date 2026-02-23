@@ -79,11 +79,11 @@ spec:
 
 **Metric source**: Use KEDA's Prometheus trigger pointing at Envoy Gateway's **upstream cluster metrics** (`envoy_cluster_upstream_rq_total`). The query `sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/<namespace>/<name>/.*"}[2m]))` scopes to a specific application using Envoy's cluster naming convention (`httproute/<namespace>/<route-name>/rule/<index>`). Initially we tried `envoy_http_downstream_rq_total`, but discovered that downstream metrics are per-listener and match ALL workloads on the Gateway — not suitable for per-app scaling. The upstream cluster metric provides per-app granularity. Note: at zero replicas, this metric reads as 0, which is the desired behavior (KEDA keeps the workload scaled to zero until requests arrive and the metric rises). This uses the same `ScaledObject` resource as CPU/memory scaling — just a different trigger type — keeping the composition simple.
 
-**Why not KEDA HTTP Add-on**: Evaluated and rejected. While actively developed (v0.12.2, Feb 2026), it is beta with the KEDA project explicitly stating it's not recommended for production. More importantly, it introduces architectural complexity: an interceptor proxy in the request path (changing `Gateway → App` to `Gateway → Interceptor → App`), a different CRD (`HTTPScaledObject` instead of `ScaledObject`), and direct interaction with Gateway API routing configuration. The Prometheus approach avoids all of this.
+**KEDA HTTP Add-on for cold-start handling**: Initially rejected due to beta status and architectural complexity, but reconsidered after KubeElasti proved incompatible with Crossplane. The HTTP Add-on (v0.12.2, Feb 2026) uses an interceptor proxy that holds requests during scale-from-zero until pods are ready. Crucially, it is **Crossplane-compatible** — it never touches, copies, or sets ownerReferences on user Services (unlike KubeElasti). The operator creates only a `ScaledObject` owned by its `HTTPScaledObject` CRD. The interceptor reads EndpointSlices but never modifies them. Trade-offs: (1) still beta — KEDA project explicitly says not recommended for production; (2) adds a proxy in the request path (`Gateway → Interceptor → App`); (3) HTTPRoute backendRef must point to the interceptor Service instead of the app Service when `minReplicas: 0`; (4) uses `HTTPScaledObject` CRD. Despite these, it is the only viable cold-start solution that works with Crossplane's ownership model.
 
 **Cold start and request handling**: When KEDA scales from zero, there is a window (~15-30s) where no pods are available. During manual testing, we confirmed that Envoy Gateway returns **503 immediately** when there are zero upstream endpoints — it short-circuits before retry logic is engaged, so BackendTrafficPolicy retry/timeout policies **do not help**. This is a fundamental Envoy behavior, not a configuration issue.
 
-**KubeElasti** (CNCF Sandbox) was evaluated as a cold-start solution but is **not compatible with Crossplane**. Three upstream bugs were found during manual testing: (1) `sync.Once` in informer registration is not reset on failure, causing silent failures when the Deployment isn't ready at first reconcile; (2) the `triggers` field is required but undocumented; (3) `checkAndCreatePrivateService` uses `DeepCopy` on the public Service, which copies Crossplane's ownerReferences (`controller: true`), then fails when setting its own controller reference. Bug #3 is a fundamental incompatibility — any controller-managed Service will hit this. Cold-start request handling during scale-from-zero remains an open problem; users should expect ~15-30s of 503s when scaling from zero.
+**KubeElasti** (CNCF Sandbox) was evaluated as a cold-start solution but is **not compatible with Crossplane**. Three upstream bugs were found during manual testing: (1) `sync.Once` in informer registration is not reset on failure, causing silent failures when the Deployment isn't ready at first reconcile; (2) the `triggers` field is required but undocumented; (3) `checkAndCreatePrivateService` uses `DeepCopy` on the public Service, which copies Crossplane's ownerReferences (`controller: true`), then fails when setting its own controller reference. Bug #3 is a fundamental incompatibility — any controller-managed Service will hit this.
 
 ### Discussion: Which scaling API approach? — **Resolved**
 
@@ -182,7 +182,7 @@ What **won't** transfer:
 - [x] KCL: Conditional HTTPRoute generation when `routing: gateway-api`
 - [x] KCL: Ingress generation preserved as default (backward compatible)
 - [x] Tests: Chainsaw test for gateway-api routing with HTTPRoute assertion
-- [ ] Reconcile gateway parentRef name with crossplane-kubernetes
+- [x] Reconcile gateway parentRef name with crossplane-kubernetes — updated from `contour` to `eg` with `namespace: envoy-gateway-system`
 
 ### Replicas
 - [x] XRD: Move replica fields to `spec.minReplicas` (min 0, default 1) and `spec.maxReplicas` (default 10); remove `spec.scaling.min`/`spec.scaling.max`
@@ -205,7 +205,7 @@ What **won't** transfer:
 - [x] Tests: Prometheus trigger scaling test — assert ScaledObject with correct trigger type, serverAddress, and query
 - [x] Tests: Scale-to-zero test — assert ScaledObject with `minReplicaCount: 0` and Prometheus trigger
 - [x] Manual verification: scale-to-zero and scale-from-zero confirmed working in KinD with Envoy Gateway + KEDA + Prometheus
-- [ ] Reconcile Prometheus service URL/namespace with crossplane-kubernetes (currently `http://kube-prometheus-stack-prometheus.prometheus-system:9090`)
+- [x] Reconcile Prometheus service URL/namespace with crossplane-kubernetes — confirmed `http://kube-prometheus-stack-prometheus.prometheus-system:9090` is correct and stable
 - [x] XRD: Add `spec.scaling.requestsPerReplica` field (integer, default 100)
 - [x] KCL: Use `requestsPerReplica` as Prometheus trigger threshold (currently hardcoded to `"1"`)
 - [x] Tests: Update Prometheus scaling tests to assert configurable threshold
@@ -220,14 +220,23 @@ What **won't** transfer:
 - [~] Tests: Chainsaw test for ElastiService generation — removed (ElastiService no longer generated)
 - [~] Feature request to crossplane-kubernetes to install KubeElasti — not needed (KubeElasti abandoned)
 
+### Cold-Start Request Handling (KEDA HTTP Add-on)
+- [x] Install KEDA HTTP Add-on in test cluster setup (Helm chart) — `scripts/keda-http-addon.nu` created, `dot.nu` updated (replaced KubeElasti), verified interceptor proxy and `httpscaledobjects.http.keda.sh` CRD running
+- [ ] KCL: Generate `HTTPScaledObject` CRD when `minReplicas: 0` and `prometheusAddress` is set
+- [ ] KCL: Conditionally set HTTPRoute backendRef to interceptor Service (`keda-add-ons-http-interceptor-proxy`) when `minReplicas: 0`, app Service otherwise
+- [ ] Manual verification: deploy app with scale-to-zero, wait for KEDA to scale to zero, send request, confirm interceptor holds request until pods are ready (no 503)
+- [ ] Tests: Chainsaw test for HTTPScaledObject generation when `minReplicas: 0`
+- [ ] Tests: Chainsaw test for HTTPRoute backendRef pointing to interceptor when `minReplicas: 0`
+- [ ] Feature request to crossplane-kubernetes to install KEDA HTTP Add-on on managed clusters
+
 ### Integration with crossplane-kubernetes
-- [ ] Reconcile gateway parentRef name (currently hardcoded `contour`)
-- [ ] Reconcile Prometheus service URL/namespace
-- [ ] Process feature response from crossplane-kubernetes and update composition if needed
+- [x] Reconcile gateway parentRef name — updated from `contour` to `eg` with `namespace: envoy-gateway-system` per crossplane-kubernetes response
+- [x] Reconcile Prometheus service URL/namespace — confirmed `http://kube-prometheus-stack-prometheus.prometheus-system:9090` is correct
+- [x] Process feature response from crossplane-kubernetes and update composition if needed — parentRef updated, Prometheus URL confirmed, PodMonitor handled by crossplane-kubernetes
 
 ## Dependencies
 
-- **Upstream**: dot-kubernetes installing Envoy Gateway, KEDA, and Prometheus on clusters
+- **Upstream**: dot-kubernetes installing Envoy Gateway, KEDA, KEDA HTTP Add-on, and Prometheus on clusters
 - **Downstream**: crossplane-inference combined Gateway + KEDA PRD (will build on patterns established here)
 
 ## Decision Log
@@ -251,3 +260,4 @@ What **won't** transfer:
 | 2026-02-23 | Add `scaling.requestsPerReplica` field (default 100) | Prometheus trigger threshold was hardcoded to `"1"`, meaning KEDA would target 1 replica per req/s — far too aggressive for most applications. Users need to specify how many requests a single replica can handle so KEDA calculates desired replicas correctly (`metricValue / threshold`) | New XRD field `spec.scaling.requestsPerReplica`; KCL uses this as Prometheus trigger threshold; default 100 is reasonable for typical web services |
 | 2026-02-23 | Abandon KubeElasti — incompatible with Crossplane | Three upstream bugs found: (1) `sync.Once` not reset on informer failure, (2) undocumented `triggers` field requirement, (3) `checkAndCreatePrivateService` uses `DeepCopy` which copies Crossplane's ownerReferences, then fails setting its own controller reference. Bug #3 is a fundamental incompatibility with any controller-managed Service | ElastiService removed from KCL composition; cold-start 503s during scale-from-zero accepted as known limitation; KubeElasti installation removed from crossplane-kubernetes feature request scope |
 | 2026-02-23 | Switch Prometheus query from downstream to upstream metric | `envoy_http_downstream_rq_total` matches ALL workloads on the Gateway (per-listener, not per-app). `envoy_cluster_upstream_rq_total` with `envoy_cluster_name=~"httproute/<namespace>/<name>/.*"` scopes to a specific app using Envoy's cluster naming convention | PromQL query updated in KCL and tests; per-app scaling now works correctly; query uses `_namespace` and `_name` template variables |
+| 2026-02-23 | Revisit KEDA HTTP Add-on as cold-start solution after KubeElasti failure | KubeElasti is incompatible with Crossplane (ownerReferences conflict). Research confirmed the KEDA HTTP Add-on does NOT have the same issue — it never touches user Services or EndpointSlices, only creates its own ScaledObject. Despite beta status and interceptor proxy trade-offs, it is the only viable cold-start solution for Crossplane-managed workloads | New milestone added: install HTTP Add-on, generate `HTTPScaledObject` in KCL, conditionally route HTTPRoute backendRef to interceptor when `minReplicas: 0`, verify manually, add tests, feature request to crossplane-kubernetes |

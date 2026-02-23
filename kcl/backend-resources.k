@@ -196,7 +196,15 @@ if _spec.scaling?.enabled:
                 threshold = _prom_threshold
             }
         }
-    ] if _prom else [
+    ] + ([
+        {
+            type = "external-push"
+            metadata = {
+                scalerAddress = "keda-add-ons-http-external-scaler.keda:9090"
+                httpScaledObject = _name
+            }
+        }
+    ] if _spec.minReplicas == 0 else []) if _prom else [
         {
             type = "cpu"
             metricType = "Utilization"

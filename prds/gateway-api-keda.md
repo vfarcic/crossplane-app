@@ -222,11 +222,11 @@ What **won't** transfer:
 
 ### Cold-Start Request Handling (KEDA HTTP Add-on)
 - [x] Install KEDA HTTP Add-on in test cluster setup (Helm chart) — `scripts/keda-http-addon.nu` created, `dot.nu` updated (replaced KubeElasti), verified interceptor proxy and `httpscaledobjects.http.keda.sh` CRD running
-- [ ] KCL: Generate `HTTPScaledObject` CRD when `minReplicas: 0` and `prometheusAddress` is set
-- [ ] KCL: Conditionally set HTTPRoute backendRef to interceptor Service (`keda-add-ons-http-interceptor-proxy`) when `minReplicas: 0`, app Service otherwise
+- [x] KCL: Generate `HTTPScaledObject` CRD when `minReplicas: 0` and `prometheusAddress` is set — uses `skip-scaledobject-creation` annotation to keep Prometheus-based ScaledObject for scaling decisions; HTTPScaledObject purely configures the interceptor for request holding
+- [x] KCL: Conditionally set HTTPRoute backendRef to interceptor Service (`keda-add-ons-http-interceptor-proxy`) when `minReplicas: 0`, app Service otherwise — routes to interceptor in `keda` namespace on port 8080; ReferenceGrant added to `scripts/keda-http-addon.nu` for cross-namespace access
 - [ ] Manual verification: deploy app with scale-to-zero, wait for KEDA to scale to zero, send request, confirm interceptor holds request until pods are ready (no 503)
-- [ ] Tests: Chainsaw test for HTTPScaledObject generation when `minReplicas: 0`
-- [ ] Tests: Chainsaw test for HTTPRoute backendRef pointing to interceptor when `minReplicas: 0`
+- [x] Tests: Chainsaw test for HTTPScaledObject generation when `minReplicas: 0` — asserts HTTPScaledObject with correct hosts, scaleTargetRef, and skip-scaledobject-creation annotation
+- [x] Tests: Chainsaw test for HTTPRoute backendRef pointing to interceptor when `minReplicas: 0` — reuses existing gateway-api patch on top of scale-to-zero state; asserts backendRef points to `keda-add-ons-http-interceptor-proxy` in `keda` namespace
 - [ ] Feature request to crossplane-kubernetes to install KEDA HTTP Add-on on managed clusters
 
 ### Integration with crossplane-kubernetes

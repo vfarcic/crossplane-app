@@ -133,10 +133,17 @@ if _spec.routing == "gateway-api":
                         value = "/"
                     }
                 }]
-                backendRefs = [{
-                    name = _name
-                    port = _spec.port
-                }]
+                if _spec.minReplicas == 0 and _spec.scaling?.enabled and _spec.scaling?.prometheusAddress:
+                    backendRefs = [{
+                        name = "keda-add-ons-http-interceptor-proxy"
+                        namespace = "keda"
+                        port = 8080
+                    }]
+                else:
+                    backendRefs = [{
+                        name = _name
+                        port = _spec.port
+                    }]
             }]
         }
     }]
@@ -216,6 +223,31 @@ if _spec.scaling?.enabled:
             minReplicaCount = _spec.minReplicas
             maxReplicaCount = _spec.maxReplicas
             triggers = _triggers
+        }
+    }]
+
+if _spec.scaling?.enabled and _spec.minReplicas == 0 and _spec.scaling?.prometheusAddress:
+    _items += [{
+        apiVersion = "http.keda.sh/v1alpha1"
+        kind = "HTTPScaledObject"
+        metadata = {
+            name = _name
+            annotations = {
+                "krm.kcl.dev/ready" = "True"
+                "krm.kcl.dev/composition-resource-name" = "{}-http-scaled-object".format(_name)
+                "httpscaledobject.keda.sh/skip-scaledobject-creation" = "true"
+            }
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
+        spec = {
+            hosts = [_spec.host]
+            scaleTargetRef = {
+                name = _name
+                service = _name
+                port = _spec.port
+            }
         }
     }]
 

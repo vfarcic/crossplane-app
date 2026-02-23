@@ -4,24 +4,29 @@ kind: App
 metadata:
   name: backend
 spec:
-  minReplicas: 3
+  routing: gateway-api
+  minReplicas: 0
   maxReplicas: 5
   scaling:
     enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
   crossplane:
     resourceRefs:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: backend
-    - apiVersion: gateway.networking.k8s.io/v1
-      kind: HTTPRoute
-      name: backend
-    - apiVersion: keda.sh/v1alpha1
-      kind: ScaledObject
-      name: backend
-    - apiVersion: v1
-      kind: Service
-      name: backend
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: backend-deployment
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: backend-http-scaled-object
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: backend-httproute
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: backend-scaled-object
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: backend-service
 ---
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -32,21 +37,51 @@ metadata:
 spec:
   scaleTargetRef:
     name: backend
-  minReplicaCount: 3
+  minReplicaCount: 0
   maxReplicaCount: 5
   triggers:
-  - type: cpu
-    metricType: Utilization
+  - type: prometheus
     metadata:
-      value: "80"
-  - type: memory
-    metricType: Utilization
+      serverAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+      query: (join('', ['sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/', $namespace, '/backend/.*"}[2m]))']))
+      threshold: "100"
+  - type: external-push
     metadata:
-      value: "80"
+      scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+      httpScaledObject: backend
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
 metadata:
   name: backend
-status:
-  readyReplicas: 3
+  labels:
+    app.kubernetes.io/name: backend
+  annotations:
+    httpscaledobject.keda.sh/skip-scaledobject-creation: "true"
+spec:
+  hosts:
+  - silly-demo.54.204.223.4.nip.io
+  scaleTargetRef:
+    name: backend
+    service: backend
+    port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: backend
+spec:
+  parentRefs:
+  - name: eg
+    namespace: envoy-gateway-system
+  hostnames:
+  - silly-demo.54.204.223.4.nip.io
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: keda-add-ons-http-interceptor-proxy
+      namespace: keda
+      port: 8080

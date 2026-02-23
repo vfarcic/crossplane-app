@@ -11,7 +11,8 @@ spec:
           value: http://silly-demo-backend.54.204.223.4.nip.io
         resources:
           limits:
-            memory: 1Gi
+            cpu: 250m
+            memory: 256Mi
           requests:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 125m
+            memory: 128Mi

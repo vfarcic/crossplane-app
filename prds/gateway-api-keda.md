@@ -46,6 +46,20 @@ Future extensions (not in this PRD):
 - Header-based routing
 - Request mirroring
 
+### Object Wrapping (provider-kubernetes)
+
+All composed resources are wrapped in `kubernetes.m.crossplane.io/v1alpha1 Object` CRs managed by provider-kubernetes. This is mandatory — there is no "raw" path.
+
+```yaml
+spec:
+  providerConfigName: my-cluster  # required — ProviderConfig for provider-kubernetes
+  targetNamespace: my-app-ns      # required — namespace where resources are created
+```
+
+**Why mandatory**: Gateway API's ReferenceGrant requires a per-app entry in the `keda` namespace for cross-namespace HTTPRoute→Service references (cold-start interceptor routing). Crossplane's `target: Default` overrides the namespace on namespace-scoped composed resources, making it impossible to create resources in a different namespace than the XR's. Object wrapping solves this — provider-kubernetes respects `forProvider.manifest.metadata.namespace` regardless of where the Object CR itself lives. By always using Object wrapping, cold-start handling works on every cluster (same-cluster or remote), and the composition has a single code path.
+
+For same-cluster deployments, users create a ProviderConfig with `InClusterConfig` or `InjectedIdentity`. For remote clusters, the ProviderConfig points to the remote cluster's kubeconfig.
+
 ### Replicas and Scaling
 
 Replica count and scaling configuration are separated: `minReplicas`/`maxReplicas` live at the top level of `spec`, while `scaling` controls *how* (or whether) autoscaling works.
@@ -101,26 +115,32 @@ Start with KEDA ScaledObject as the only autoscaling mechanism (no HPA). The pre
 
 Modify `kcl/backend-resources.k` to:
 
-1. **Routing**: Add conditional resource generation based on `spec.routing`:
+1. **Object wrapping**: All resources wrapped in `kubernetes.m.crossplane.io/v1alpha1 Object` CRs via an `_object` lambda. Each Object CR includes `providerConfigRef` (from `spec.providerConfigName`) and sets the target namespace via `forProvider.manifest.metadata.namespace`. No raw `krm.kcl.dev` annotation path.
+
+2. **Routing**: Add conditional resource generation based on `spec.routing`:
    - `routing: ingress` (or unset) → generate `Ingress` (current behavior)
    - `routing: gateway-api` → generate `HTTPRoute` referencing the default `Gateway`
 
-2. **Scaling**: Replace HPA with KEDA ScaledObject:
+3. **Scaling**: Replace HPA with KEDA ScaledObject:
    - Remove HPA generation entirely
    - When `scaling.enabled: true` → generate `keda.sh/v1alpha1 ScaledObject` with CPU and memory triggers
    - ScaledObject targets the Deployment by name
    - `minReplicas`/`maxReplicas` passed to ScaledObject
 
-3. **Prometheus trigger**: Add Prometheus-based scaling for scale-to-zero:
+4. **Prometheus trigger**: Add Prometheus-based scaling for scale-to-zero:
    - When `scaling.prometheusAddress` is set → generate ScaledObject with Prometheus trigger instead of CPU/memory triggers
    - PromQL query: `sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/<namespace>/<name>/.*"}[2m]))` — per-app upstream cluster metric using Envoy's naming convention
    - `prometheusAddress` specifies the Prometheus server URL
    - `requestsPerReplica` (default 100) used as Prometheus trigger `threshold` — KEDA calculates desired replicas as `metricValue / threshold`
    - Enables `minReplicas: 0` for scale-to-zero
 
+5. **ReferenceGrant**: When `routing == "gateway-api"` AND `minReplicas == 0` AND `prometheusAddress` → generate per-app ReferenceGrant Object CR in `keda` namespace, allowing HTTPRoute from the app's namespace to reference the interceptor Service
+
 ### XRD Changes
 
 Extend `package/definition.yaml` with:
+- `spec.providerConfigName` (string, required) — ProviderConfig name for provider-kubernetes; used for both same-cluster and remote-cluster deployments
+- `spec.targetNamespace` (string, required) — namespace where actual resources (Deployment, Service, etc.) are created
 - `spec.routing` enum field (`ingress`, `gateway-api`)
 - `spec.minReplicas` (integer, minimum 0, default 1) — replaces `spec.scaling.min`
 - `spec.maxReplicas` (integer, default 10) — replaces `spec.scaling.max`
@@ -128,12 +148,16 @@ Extend `package/definition.yaml` with:
 - `spec.scaling.requestsPerReplica` (integer, default 100) — requests per second each replica can handle; used as KEDA Prometheus trigger threshold; only applies when `prometheusAddress` is set
 - Remove `spec.scaling.min` and `spec.scaling.max` (moved to top level)
 
-### Backward Compatibility
+### Backward Compatibility — Breaking Changes (Major Version Bump)
 
-- Default `routing` to `ingress` — existing XRs continue to work unchanged
-- Default `minReplicas: 1` and `maxReplicas: 10` — matches current scaling defaults
-- HPA removed entirely — `scaling.enabled: true` now generates KEDA ScaledObject instead of HPA (requires KEDA on cluster, guaranteed by dot-kubernetes)
-- Deployment now explicitly sets `spec.replicas` from `minReplicas` when scaling is disabled (previously relied on Kubernetes default)
+This PRD introduces breaking changes requiring a major version bump:
+
+- **`providerConfigName` required**: All App XRs must specify a ProviderConfig for provider-kubernetes. Users need to install provider-kubernetes and create a ProviderConfig (e.g., `InjectedIdentity` for same-cluster)
+- **`targetNamespace` required**: All App XRs must specify the target namespace for resource creation
+- **All resources wrapped in Object CRs**: Composition no longer creates resources directly via `krm.kcl.dev` annotations — all resources are `kubernetes.m.crossplane.io/v1alpha1 Object` CRs managed by provider-kubernetes
+- **provider-kubernetes is a hard dependency**: Added to `package/crossplane.yaml`
+- HPA removed entirely — `scaling.enabled: true` now generates KEDA ScaledObject instead of HPA
+- Default `routing` to `ingress`, `minReplicas: 1`, `maxReplicas: 10` — matches current scaling defaults
 
 ## Testing
 
@@ -143,13 +167,15 @@ This is designed to be fully testable in a local KinD cluster:
 
 1. Install KEDA and Envoy Gateway via Helm in the test cluster setup
 2. Install Prometheus (kube-prometheus-stack or similar) for Prometheus trigger tests
-3. Create a `Gateway` resource with HTTP listener
-4. Deploy a test application via the App XR with `routing: gateway-api`
-5. Assert `HTTPRoute` is created with correct parentRef and backendRef
-6. Deploy with `scaling.enabled: true`
-7. Assert `ScaledObject` is created with correct triggers and target
-8. Deploy with `scaling.prometheusAddress` and `minReplicas: 0`
-9. Assert `ScaledObject` is created with Prometheus trigger and `minReplicaCount: 0`
+3. Install provider-kubernetes with `InjectedIdentity` ProviderConfig for same-cluster Object wrapping
+4. Create a `Gateway` resource with HTTP listener
+5. Deploy a test application via the App XR with `providerConfigName`, `targetNamespace`, and `routing: gateway-api`
+6. Assert Object CRs are created wrapping the actual resources (Deployment, Service, HTTPRoute, etc.)
+7. Assert actual resources exist in the target namespace
+8. Deploy with `scaling.enabled: true`
+9. Assert ScaledObject Object CR and actual ScaledObject with correct triggers
+10. Deploy with `scaling.prometheusAddress` and `minReplicas: 0`
+11. Assert ScaledObject with Prometheus trigger, HTTPScaledObject, and ReferenceGrant in `keda` namespace
 
 No GPUs, no cloud resources, no inference stack — just standard Kubernetes resources.
 
@@ -235,27 +261,29 @@ What **won't** transfer:
 ### KEDA HTTP Add-on: Routing Gate and ReferenceGrant
 HTTPScaledObject, external-push trigger, and interceptor backendRef are currently generated whenever `minReplicas: 0` + `prometheusAddress`, regardless of routing type. These only function with `routing: gateway-api` (traffic must flow through the Gateway API HTTPRoute to the interceptor). With Ingress routing, the interceptor never receives traffic, making these resources useless.
 
-The per-app ReferenceGrant in `keda` namespace (allowing cross-namespace HTTPRoute→Service reference to the interceptor) was implemented but lost during a code reset. Key discovery: Crossplane's `target: Default` places namespace-scoped composed resources in the XR's namespace, ignoring KCL namespace overrides — so the ReferenceGrant ended up in the app namespace instead of `keda`. For local deployments, the wildcard ReferenceGrant in `scripts/keda-http-addon.nu` setup script covers this. For remote deployments (Object wrapping), the Object CR places resources in the correct namespace, so per-app ReferenceGrant works there.
+**ReferenceGrant**: Gateway API requires a per-app ReferenceGrant in the `keda` namespace to allow cross-namespace HTTPRoute→Service references to the interceptor. The `namespace` field in `spec.from` is required (no wildcard support), so crossplane-kubernetes cannot create a universal grant. The per-app ReferenceGrant is created by the composition as an Object CR — since all resources are Object-wrapped, provider-kubernetes places it in the `keda` namespace correctly. For local KinD testing, the setup script (`scripts/keda-http-addon.nu`) creates a ReferenceGrant covering the test namespace.
 
 - [ ] KCL: Gate HTTPScaledObject, external-push trigger, and interceptor HTTPRoute backendRef on `routing == "gateway-api"`
-- [ ] Tests: Update `assert-scaling-prometheus-zero.yaml` — remove external-push trigger from ScaledObject (routing is `ingress` at this step)
-- [ ] Tests: Verify `assert-scaling-prometheus-zero-gateway-api.yaml` still passes
+- [ ] KCL: Generate per-app ReferenceGrant in `keda` namespace when `routing == "gateway-api"` AND `minReplicas == 0` AND `prometheusAddress` — Object wrapping ensures correct namespace placement
+- [ ] Tests: Update consolidated `assert-scaling.yaml` to include ReferenceGrant assertion (scaling tests now use single combined patch+assert)
 - [ ] Tests: Run full `task test` to confirm all existing tests pass
 
-### Remote Cluster Deployment (Object Wrapping)
-**Implementation approach**: Two lambdas `_raw` (adds `krm.kcl.dev` annotations, current behavior) and `_wrapped` (wraps in Object CR), selected by `_resource = _wrapped if _providerConfigName else _raw`. KCL lambdas cannot end with `if/else` blocks (body must be a single expression), so conditional logic inside one lambda won't compile.
+### Object Wrapping (Mandatory)
+**Implementation approach**: All composed resources are wrapped in `kubernetes.m.crossplane.io/v1alpha1 Object` CRs. There is no "raw" path — every resource goes through provider-kubernetes. A single `_object` lambda wraps any manifest in an Object CR with `providerConfigRef` and sets the target namespace via `forProvider.manifest.metadata.namespace`.
 
-**Cross-namespace limitation**: Crossplane's `target: Default` always creates namespace-scoped composed resources in the XR's namespace. The `_wrapped` path handles cross-namespace correctly via `forProvider.manifest.metadata.namespace`. This matters for the per-app ReferenceGrant in `keda` namespace — only created in the `_wrapped` path.
+**Why mandatory**: Gateway API's ReferenceGrant requires a per-app entry in the `keda` namespace, and the `namespace` field in `spec.from` is required (no wildcard). Crossplane's `target: Default` overrides namespaces on namespace-scoped composed resources, making it impossible to create the ReferenceGrant in `keda` via the raw path. Object wrapping solves this universally — same-cluster or remote. A single code path is simpler to maintain and test than conditional `_raw`/`_wrapped` branching.
 
-- [ ] XRD: Add `spec.providerConfigName` (string, default `""`) and `spec.targetNamespace` (string, default `""`) — both need `default: ""` so KCL can safely access them via `or ""`
-- [ ] KCL: `_raw` lambda — takes `(manifest, suffix, ns_override)`, adds `krm.kcl.dev` annotations, optionally sets namespace from `ns_override`
-- [ ] KCL: `_wrapped` lambda — wraps manifest in `kubernetes.m.crossplane.io/v1alpha1 Object` with `providerConfigRef` (must include explicit `kind: ProviderConfig`); sets namespace from `ns_override` or `_targetNamespace`
-- [ ] KCL: `_resource = _wrapped if _providerConfigName else _raw` — all resource creation refactored through this
-- [ ] KCL: Per-app ReferenceGrant in `keda` namespace — only when `_providerConfigName` is set AND `routing == "gateway-api"` AND `minReplicas == 0` AND `prometheusAddress` (for local deployments, the setup script's wildcard ReferenceGrant covers it)
-- [ ] Setup: Install provider-kubernetes (`xpkg.crossplane.io/crossplane-contrib/provider-kubernetes:v1.2.0`), grant its SA cluster-admin RBAC
-- [ ] Regenerate `package/backend.yaml` via `task package-generate`
-- [ ] Tests: Existing backend/frontend/backend-db tests pass unchanged (no `providerConfigName` set)
-- [ ] Tests: New `backend-remote/` test directory — ProviderConfig with `InjectedIdentity` for same-cluster testing, App with `providerConfigName` + `targetNamespace`, assert Object CRs and actual resources in target namespace
+- [x] XRD: Add `spec.providerConfigName` (string, required) and `spec.targetNamespace` (string, optional — defaults to XR namespace via `_oxr.metadata.namespace`)
+- [x] KCL: `_object` lambda — wraps manifest in `kubernetes.m.crossplane.io/v1alpha1 Object` with `providerConfigRef` (uses `kind: ClusterProviderConfig` for namespace-scoped `.m.` API); sets namespace from `_targetNamespace`
+- [x] KCL: Refactor all resource creation through `_object` — Deployment, Service, Ingress/HTTPRoute, ScaledObject, HTTPScaledObject
+- [x] KCL: Remove `krm.kcl.dev` annotation-based resource creation entirely
+- [x] Setup: Install provider-kubernetes, grant its SA cluster-admin RBAC
+- [x] Setup: Create `ClusterProviderConfig` with `InjectedIdentity` for same-cluster testing
+- [x] Add provider-kubernetes to `package/crossplane.yaml` dependencies
+- [x] Regenerate `package/backend.yaml` via KCL
+- [x] Tests: All existing tests updated — App XRs specify `providerConfigName` + `targetNamespace`, assert Object CRs wrapping actual resources; scaling tests consolidated into single patch+assert cycle
+- [x] Frontend composition removed — backend composition handles all app types (frontend uses `spec.frontend.backendUrl` for `BACKEND_URL` env var)
+- [ ] Bump major version (breaking change: `providerConfigName` now required)
 
 ### Integration with crossplane-kubernetes
 - [x] Reconcile gateway parentRef name — updated from `contour` to `eg` with `namespace: envoy-gateway-system` per crossplane-kubernetes response
@@ -265,6 +293,7 @@ The per-app ReferenceGrant in `keda` namespace (allowing cross-namespace HTTPRou
 ## Dependencies
 
 - **Upstream**: dot-kubernetes installing Envoy Gateway, KEDA, KEDA HTTP Add-on, and Prometheus on clusters
+- **Required**: provider-kubernetes (`xpkg.crossplane.io/crossplane-contrib/provider-kubernetes`) — all composed resources are wrapped in Object CRs
 - **Downstream**: crossplane-inference combined Gateway + KEDA PRD (will build on patterns established here)
 
 ## Decision Log
@@ -291,6 +320,12 @@ The per-app ReferenceGrant in `keda` namespace (allowing cross-namespace HTTPRou
 | 2026-02-23 | Revisit KEDA HTTP Add-on as cold-start solution after KubeElasti failure | KubeElasti is incompatible with Crossplane (ownerReferences conflict). Research confirmed the KEDA HTTP Add-on does NOT have the same issue — it never touches user Services or EndpointSlices, only creates its own ScaledObject. Despite beta status and interceptor proxy trade-offs, it is the only viable cold-start solution for Crossplane-managed workloads | New milestone added: install HTTP Add-on, generate `HTTPScaledObject` in KCL, conditionally route HTTPRoute backendRef to interceptor when `minReplicas: 0`, verify manually, add tests, feature request to crossplane-kubernetes |
 | 2026-02-23 | Add `external-push` trigger to ScaledObject for cold-start scaling | With `skip-scaledobject-creation`, the HTTP Add-on's external scaler has no ScaledObject trigger to act on. The Prometheus trigger alone cannot detect cold-start requests because the interceptor holds them before they reach the app (metric stays 0). Adding `external-push` as a second trigger in the same ScaledObject lets the interceptor's pending queue signal KEDA to scale from zero, while Prometheus handles steady-state scaling | ScaledObject now has dual triggers when `minReplicas: 0`; cold-start verified: HTTP 200 with `x-keda-http-cold-start: true`, ~3s latency |
 | 2026-02-23 | Per-app ReferenceGrant generated by composition, not cluster-wide setup | ReferenceGrant in `keda` namespace allows HTTPRoutes to reference the interceptor Service cross-namespace. Originally a wildcard grant in `scripts/keda-http-addon.nu` setup, moved to per-app generation in the KCL composition (scoped to the app's namespace). However, Crossplane's `target: Default` places namespace-scoped composed resources in the XR's namespace — so for local deployments, the setup script's wildcard ReferenceGrant is still needed. Per-app ReferenceGrant only works correctly via Object wrapping (`_wrapped` path) | For local: wildcard ReferenceGrant in setup script. For remote (Object wrapping): per-app ReferenceGrant created in `keda` namespace via Object CR |
+| 2026-02-23 | `targetNamespace` is optional, defaults to XR namespace | Original plan required `targetNamespace` as a required field. During implementation, defaulting to `_oxr.metadata.namespace` proved simpler — most users deploy resources in the same namespace as the XR. Remote-cluster deployments can override explicitly | `targetNamespace` removed from required fields; `_targetNamespace` defaults to `_oxr.metadata.namespace` in KCL |
+| 2026-02-23 | Use `ClusterProviderConfig` instead of `ProviderConfig` | The namespace-scoped `.m.` API (`kubernetes.m.crossplane.io`) defaults to namespace-scoped `ProviderConfig`. Since the ProviderConfig must be accessible to Object CRs in any namespace, `ClusterProviderConfig` (cluster-scoped) is required. The `providerConfigRef` in the `_object` lambda must include `kind: ClusterProviderConfig` | `_object` lambda sets `providerConfigRef.kind = "ClusterProviderConfig"`; setup creates `ClusterProviderConfig` instead of `ProviderConfig` |
+| 2026-02-23 | Frontend composition removed — backend handles all app types | Frontend was a subset of backend (different resource limits, `BACKEND_URL` env instead of DB vars, no scaling). Rather than maintaining two compositions, consolidated into backend with conditional `BACKEND_URL` support via `spec.frontend.backendUrl` | `package/frontend.yaml` deleted; `kcl/frontend.k` and `kcl/frontend-resources.k` deleted; frontend tests now use `type: backend` |
+| 2026-02-23 | Consolidate scaling tests into single patch+assert cycle | Multiple sequential patch+assert cycles (gateway-api, replicas, scaling, prometheus, scale-to-zero) each waited for Crossplane reconciliation, making tests slow. Combined all scaling config into one patch and one comprehensive assertion | 11 test files deleted; single `scaling.yaml` and `assert-scaling.yaml` cover all scaling scenarios; backend test reduced from 8 to 3 patch+assert cycles |
+| 2026-02-23 | Explicit App XR deletion in chainsaw `finally` blocks | Namespace-scoped Object CRs with provider-kubernetes finalizers cause deadlock during namespace deletion: provider-kubernetes tries to create `ProviderConfigUsage` but namespace is terminating. Explicit deletion of the App XR (which cascades to Object CRs) while the namespace is still Active prevents the deadlock | All chainsaw tests add `finally` block that deletes App XR and waits for Object CR cleanup before namespace deletion begins |
 | 2026-02-23 | Gate KEDA HTTP Add-on resources on `routing == "gateway-api"` | HTTPScaledObject, external-push trigger, and interceptor backendRef only function when traffic flows through Gateway API HTTPRoute to the interceptor. With Ingress routing, the interceptor never receives traffic, making these resources useless | KCL conditions for these resources need `_spec.routing == "gateway-api"` added; test assertions updated accordingly |
 | 2026-02-23 | Cross-namespace composed resources don't work with Crossplane `target: Default` | Verified in KinD: a ReferenceGrant with `namespace: keda` in the KCL output was created by Crossplane in the XR's namespace instead. Crossplane always overrides the namespace for namespace-scoped composed resources. Object wrapping (`kubernetes.m.crossplane.io/v1alpha1 Object`) solves this — the Object CR's `forProvider.manifest.metadata.namespace` is respected | ReferenceGrant only generated in `_wrapped` path; local deployments use wildcard from setup script |
-| 2026-02-23 | Add conditional Object wrapping for remote cluster deployment | Adding optional `providerConfigName` and `targetNamespace` XRD fields enables deploying to remote clusters by wrapping resources in `kubernetes.m.crossplane.io/v1alpha1 Object` (namespaced) with `providerConfigRef` (requires explicit `kind: ProviderConfig`). Two lambdas `_raw`/`_wrapped` with `_resource = _wrapped if _providerConfigName else _raw` — KCL lambdas can't end with `if/else`. When `providerConfigName` is not set, current behavior preserved | New XRD fields with `default: ""`; KCL restructured with `_resource` helper; new `backend-remote/` test directory for Object wrapping validation |
+| 2026-02-23 | ReferenceGrant must be per-app, not wildcard | Gateway API requires explicit `namespace` in `spec.from` — no wildcard support. crossplane-kubernetes confirmed they cannot create a universal ReferenceGrant since app namespaces are unknown ahead of time. Per-app ReferenceGrant must be created by the composition | ReferenceGrant generated as Object CR in `keda` namespace, scoped to the app's namespace |
+| 2026-02-23 | Mandatory Object wrapping for all resources — no raw path | Per-app ReferenceGrant in `keda` namespace requires Object wrapping (Crossplane's `target: Default` overrides namespace on composed resources). Rather than maintaining two code paths (`_raw`/`_wrapped`), wrap ALL resources in Object CRs unconditionally. This makes cold-start work on every cluster (same-cluster via `InjectedIdentity` ProviderConfig, remote via remote ProviderConfig) and simplifies the composition to a single path | `providerConfigName` and `targetNamespace` are required fields (no defaults); provider-kubernetes is a hard dependency; all `krm.kcl.dev` annotation-based resource creation removed; major version bump required |

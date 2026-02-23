@@ -3,25 +3,42 @@ ocds = option("params").ocds
 _name = oxr.metadata.name
 _namespace = oxr.metadata.namespace
 _spec = oxr.spec
+_providerConfigName = _spec.providerConfigName
+_targetNamespace = _spec.targetNamespace or _namespace
 
-_metadata = lambda name: str, kind: str -> any {
+_object = lambda manifest: any, suffix: str -> any {
     {
-        name = name
-        annotations = {
-            "krm.kcl.dev/ready" = "True"
-            "krm.kcl.dev/composition-resource-name" = "{}-{}".format(name, kind)
+        apiVersion = "kubernetes.m.crossplane.io/v1alpha1"
+        kind = "Object"
+        metadata = {
+            name = "{}-{}".format(_name, suffix)
+            namespace = _targetNamespace
+            annotations = {
+                "krm.kcl.dev/ready" = "True"
+                "krm.kcl.dev/composition-resource-name" = "{}-{}".format(_name, suffix)
+            }
         }
-        labels = {
-            "app.kubernetes.io/name" = name
+        spec = {
+            forProvider.manifest = manifest
+            providerConfigRef = {
+                name = _providerConfigName
+                kind = "ClusterProviderConfig"
+            }
         }
     }
 }
 
 _items = [
-    {
+    _object({
         apiVersion = "apps/v1"
         kind = "Deployment"
-        metadata = _metadata(_name, "deployment")
+        metadata = {
+            name = _name
+            namespace = _targetNamespace
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
         spec = {
             if not _spec.scaling?.enabled:
                 replicas = _spec.minReplicas
@@ -57,6 +74,13 @@ _items = [
                         ports = [
                             {containerPort = _spec.port }
                         ]
+                        if _spec.frontend?.backendUrl:
+                            env = [
+                                {
+                                    name = "BACKEND_URL"
+                                    value = _spec.frontend.backendUrl
+                                }
+                            ]
                         if _spec.db?.secret:
                             env = [
                                 {
@@ -93,10 +117,17 @@ _items = [
                 }
             }
         }
-    }, {
+    }, "deployment"),
+    _object({
         apiVersion = "v1"
         kind = "Service"
-        metadata = _metadata(_name, "service")
+        metadata = {
+            name = _name
+            namespace = _targetNamespace
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
         spec = {
             type = "ClusterIP"
             ports = [{
@@ -109,17 +140,24 @@ _items = [
                 "app.kubernetes.io/name" = _name
             }
         }
-    }, {
+    }, "service"),
+    {
         **oxr
         status.host = _spec.host
     }
 ]
 
 if _spec.routing == "gateway-api":
-    _items += [{
+    _items += [_object({
         apiVersion = "gateway.networking.k8s.io/v1"
         kind = "HTTPRoute"
-        metadata = _metadata(_name, "httproute")
+        metadata = {
+            name = _name
+            namespace = _targetNamespace
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
         spec = {
             parentRefs = [{
                 name = "eg"
@@ -146,19 +184,18 @@ if _spec.routing == "gateway-api":
                     }]
             }]
         }
-    }]
+    }, "httproute")]
 else:
-    _items += [{
+    _items += [_object({
         apiVersion = "networking.k8s.io/v1"
         kind = "Ingress"
         metadata = {
             name = _name
+            namespace = _targetNamespace
             labels = {
                 "app.kubernetes.io/name" = _name
             }
             annotations = {
-                "krm.kcl.dev/ready" = "True"
-                "krm.kcl.dev/composition-resource-name" = "{}-ingress".format(_name)
                 "ingress.kubernetes.io/ssl-redirect" = "false"
             }
         }
@@ -179,7 +216,7 @@ else:
                 }
             }]
         }
-    }]
+    }, "ingress")]
 
 if _spec.scaling?.enabled:
     if _spec.minReplicas == 0:
@@ -204,7 +241,7 @@ if _spec.scaling?.enabled:
                 httpScaledObject = _name
             }
         }
-    ] if _spec.minReplicas == 0 else []) if _prom else [
+    ] if _spec.minReplicas == 0 and _spec.routing == "gateway-api" else []) if _prom else [
         {
             type = "cpu"
             metricType = "Utilization"
@@ -220,10 +257,16 @@ if _spec.scaling?.enabled:
             }
         }
     ]
-    _items += [{
+    _items += [_object({
         apiVersion = "keda.sh/v1alpha1"
         kind = "ScaledObject"
-        metadata = _metadata(_name, "scaled-object")
+        metadata = {
+            name = _name
+            namespace = _targetNamespace
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
         spec = {
             scaleTargetRef = {
                 name = _name
@@ -232,17 +275,16 @@ if _spec.scaling?.enabled:
             maxReplicaCount = _spec.maxReplicas
             triggers = _triggers
         }
-    }]
+    }, "scaled-object")]
 
-if _spec.scaling?.enabled and _spec.minReplicas == 0 and _spec.scaling?.prometheusAddress:
-    _items += [{
+if _spec.scaling?.enabled and _spec.minReplicas == 0 and _spec.scaling?.prometheusAddress and _spec.routing == "gateway-api":
+    _items += [_object({
         apiVersion = "http.keda.sh/v1alpha1"
         kind = "HTTPScaledObject"
         metadata = {
             name = _name
+            namespace = _targetNamespace
             annotations = {
-                "krm.kcl.dev/ready" = "True"
-                "krm.kcl.dev/composition-resource-name" = "{}-http-scaled-object".format(_name)
                 "httpscaledobject.keda.sh/skip-scaledobject-creation" = "true"
             }
             labels = {
@@ -257,13 +299,19 @@ if _spec.scaling?.enabled and _spec.minReplicas == 0 and _spec.scaling?.promethe
                 port = _spec.port
             }
         }
-    }]
+    }, "http-scaled-object")]
 
 if _spec.db?.storeName and _spec.db?.secret:
-    _items += [{
+    _items += [_object({
         apiVersion = "external-secrets.io/v1"
         kind = "ExternalSecret"
-        metadata = _metadata(_name, "external-secret")
+        metadata = {
+            name = _name
+            namespace = _targetNamespace
+            labels = {
+                "app.kubernetes.io/name" = _name
+            }
+        }
         spec = {
             dataFrom = [{
                 extract = {
@@ -284,7 +332,6 @@ if _spec.db?.storeName and _spec.db?.secret:
                 name = _spec.db.secret
             }
         }
-    }]
+    }, "external-secret")]
 
 items = _items
-

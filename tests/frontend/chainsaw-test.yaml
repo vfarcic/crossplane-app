@@ -8,7 +8,7 @@ spec:
     - name: name
       value: frontend
     - name: type
-      value: frontend
+      value: backend
   steps:
     - try:
         - apply:
@@ -24,3 +24,11 @@ spec:
             content: kubectl get managed
         - script:
             content: kubectl get all,ingress --namespace $NAMESPACE
+      finally:
+        - script:
+            timeout: 120s
+            content: |
+              kubectl delete apps.devopstoolkit.live frontend -n $NAMESPACE --ignore-not-found
+              while kubectl get objects.kubernetes.m.crossplane.io -n $NAMESPACE --no-headers 2>/dev/null | grep -q .; do
+                sleep 2
+              done

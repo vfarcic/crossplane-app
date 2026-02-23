@@ -9,6 +9,7 @@ source  scripts/gateway-api.nu
 source  scripts/keda.nu
 source  scripts/prometheus.nu
 source  scripts/keda-http-addon.nu
+source  scripts/provider-kubernetes.nu
 
 def main [] {}
 
@@ -33,12 +34,12 @@ def "main setup" [] {
     print $"Applying (ansi yellow_bold)Crossplane Providers(ansi reset)..."
 
     let provider_files = [
-        "cluster-role.yaml"
         "function-auto-ready.yaml"
         "function-patch-and-transform.yaml"
         "github.yaml"
         "kcl.yaml"
-    ]  
+        "provider-kubernetes.yaml"
+    ]
     for file in $provider_files {
         kubectl apply --filename $"providers/($file)"
     }
@@ -50,7 +51,6 @@ def "main setup" [] {
     sleep 1sec
 
     let package_files = [
-        "frontend.yaml"
         "backend.yaml"
     ]
     for file in $package_files {
@@ -66,6 +66,8 @@ def "main setup" [] {
             --for=condition=healthy provider.pkg.crossplane.io
             --all --timeout 300s
     )
+
+    main apply provider_kubernetes_config
 
     kubectl create namespace a-team
 

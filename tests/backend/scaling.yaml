@@ -3,7 +3,10 @@ kind: App
 metadata:
   name: backend
 spec:
-  minReplicas: 3
+  routing: gateway-api
+  minReplicas: 0
   maxReplicas: 5
   scaling:
     enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+    requestsPerReplica: 100

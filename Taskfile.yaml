@@ -13,7 +13,6 @@ tasks:
     cmds:
       - cmd: kubectl --kubeconfig kubeconfig-dot-app.yaml apply --filename package/definition.yaml && sleep 1
       - for: [
-          "frontend.yaml",
           "backend.yaml"
         ]
         cmd: kubectl --kubeconfig kubeconfig-dot-app.yaml apply --filename package/{{ .ITEM }}
@@ -47,7 +46,6 @@ tasks:
     sources:
       - kcl/*.k
       - tests/**/*.yaml
-      - package/frontend.yaml
     generates:
       - package/*.yaml
   test-once:

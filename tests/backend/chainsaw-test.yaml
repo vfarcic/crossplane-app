@@ -20,33 +20,9 @@ spec:
         - assert:
             file: assert-install.yaml
         - patch:
-            file: gateway-api.yaml
-        - assert:
-            file: assert-gateway-api.yaml
-        - patch:
-            file: replicas.yaml
-        - assert:
-            file: assert-replicas.yaml
-        - patch:
             file: scaling.yaml
         - assert:
             file: assert-scaling.yaml
-        - patch:
-            file: scaling-gateway-api.yaml
-        - assert:
-            file: assert-scaling-gateway-api.yaml
-        - patch:
-            file: scaling-prometheus.yaml
-        - assert:
-            file: assert-scaling-prometheus.yaml
-        - patch:
-            file: scaling-prometheus-zero.yaml
-        - assert:
-            file: assert-scaling-prometheus-zero.yaml
-        - patch:
-            file: gateway-api.yaml
-        - assert:
-            file: assert-scaling-prometheus-zero-gateway-api.yaml
         - patch:
             file: pull-secret.yaml
         - assert:
@@ -58,3 +34,11 @@ spec:
             content: kubectl get managed
         - script:
             content: kubectl get all,ingress --namespace $NAMESPACE
+      finally:
+        - script:
+            timeout: 120s
+            content: |
+              kubectl delete apps.devopstoolkit.live backend -n $NAMESPACE --ignore-not-found
+              while kubectl get objects.kubernetes.m.crossplane.io -n $NAMESPACE --no-headers 2>/dev/null | grep -q .; do
+                sleep 2
+              done

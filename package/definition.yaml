@@ -41,6 +41,12 @@ spec:
                   - ingress
                   - gateway-api
                 default: ingress
+              providerConfigName:
+                description: Name of the provider-kubernetes ClusterProviderConfig for Object wrapping
+                type: string
+              targetNamespace:
+                description: Namespace where actual resources are created (defaults to the XR namespace if not set)
+                type: string
               ingressClassName:
                 description: The Ingress class name
                 type: string
@@ -90,6 +96,7 @@ spec:
             required:
             - image
             - tag
+            - providerConfigName
           status:
             type: object
             properties:

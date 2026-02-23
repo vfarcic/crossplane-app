@@ -14,21 +14,4 @@ def "main apply keda_http_addon" [] {
             --namespace keda --create-namespace --wait
     )
 
-    # Allow HTTPRoutes from any namespace to reference the interceptor Service in the keda namespace
-    (kubectl apply --filename - <<EOF
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: keda-interceptor
-  namespace: keda
-spec:
-  from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-  to:
-    - group: ""
-      kind: Service
-EOF
-    )
-
 }

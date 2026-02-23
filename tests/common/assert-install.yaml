@@ -8,6 +8,7 @@ spec:
   image: ghcr.io/vfarcic/silly-demo
   tag: "v1.5.235"
   port: 8080
+  providerConfigName: local
   crossplane:
     compositionRef:
       name: (join('-', ['app', $type]))
@@ -16,15 +17,15 @@ spec:
         location: local
         type: ($type)
     resourceRefs:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: ($name)
-    - apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      name: ($name)
-    - apiVersion: v1
-      kind: Service
-      name: ($name)
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: (join('-', [$name, 'deployment']))
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: (join('-', [$name, 'ingress']))
+    - apiVersion: kubernetes.m.crossplane.io/v1alpha1
+      kind: Object
+      name: (join('-', [$name, 'service']))
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -94,4 +95,3 @@ spec:
   selector:
     app.kubernetes.io/name: ($name)
   type: ClusterIP
-

@@ -25,6 +25,7 @@ spec:
           oxr = option("params").oxr
           ocds = option("params").ocds
           _name = oxr.metadata.name
+          _namespace = oxr.metadata.namespace
           _spec = oxr.spec
 
           _metadata = lambda name: str, kind: str -> any {
@@ -200,13 +201,15 @@ spec:
               if _spec.minReplicas == 0:
                   assert _spec.scaling?.prometheusAddress, "minReplicas: 0 requires scaling.prometheusAddress (CPU/memory triggers need running pods)"
               _prom = _spec.scaling?.prometheusAddress
+              _prom_query = "sum(rate(envoy_cluster_upstream_rq_total{{envoy_cluster_name=~\"httproute/{}/{}/.*\"}}[2m]))".format(_namespace, _name)
+              _prom_threshold = str(_spec.scaling?.requestsPerReplica or 100)
               _triggers = [
                   {
                       type = "prometheus"
                       metadata = {
                           serverAddress = _prom
-                          query = "sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~\"http-.*\"}[2m]))"
-                          threshold = str(_spec.scaling?.requestsPerReplica or 100)
+                          query = _prom_query
+                          threshold = _prom_threshold
                       }
                   }
               ] if _prom else [
@@ -238,25 +241,6 @@ spec:
                       triggers = _triggers
                   }
               }]
-              if _spec.minReplicas == 0:
-                  _items += [{
-                      apiVersion = "elasti.truefoundry.com/v1alpha1"
-                      kind = "ElastiService"
-                      metadata = _metadata(_name, "elasti-service")
-                      spec = {
-                          service = _name
-                          minTargetReplicas = 1
-                          scaleTargetRef = {
-                              apiVersion = "apps/v1"
-                              kind = "deployments"
-                              name = _name
-                          }
-                          autoscaler = {
-                              name = _name
-                              type = "keda"
-                          }
-                      }
-                  }]
 
           if _spec.db?.storeName and _spec.db?.secret:
               _items += [{

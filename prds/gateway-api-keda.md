@@ -77,13 +77,13 @@ spec:
 
 ### Scale-to-Zero: Metric Source and Cold Start — Resolved
 
-**Metric source**: Use KEDA's Prometheus trigger pointing at Envoy Gateway's **downstream listener metrics** (`envoy_http_downstream_rq_total`). The gateway listener runs independently of application pods, so this metric remains observable at zero replicas. Initially we tried `envoy_cluster_upstream_rq_total`, but discovered that Envoy only creates backend cluster metrics when pods exist — a chicken-and-egg problem. The downstream listener metric (`envoy_http_conn_manager_prefix=~"http-.*"`) counts all requests arriving at the Gateway regardless of backend state. This uses the same `ScaledObject` resource as CPU/memory scaling — just a different trigger type — keeping the composition simple.
+**Metric source**: Use KEDA's Prometheus trigger pointing at Envoy Gateway's **upstream cluster metrics** (`envoy_cluster_upstream_rq_total`). The query `sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/<namespace>/<name>/.*"}[2m]))` scopes to a specific application using Envoy's cluster naming convention (`httproute/<namespace>/<route-name>/rule/<index>`). Initially we tried `envoy_http_downstream_rq_total`, but discovered that downstream metrics are per-listener and match ALL workloads on the Gateway — not suitable for per-app scaling. The upstream cluster metric provides per-app granularity. Note: at zero replicas, this metric reads as 0, which is the desired behavior (KEDA keeps the workload scaled to zero until requests arrive and the metric rises). This uses the same `ScaledObject` resource as CPU/memory scaling — just a different trigger type — keeping the composition simple.
 
 **Why not KEDA HTTP Add-on**: Evaluated and rejected. While actively developed (v0.12.2, Feb 2026), it is beta with the KEDA project explicitly stating it's not recommended for production. More importantly, it introduces architectural complexity: an interceptor proxy in the request path (changing `Gateway → App` to `Gateway → Interceptor → App`), a different CRD (`HTTPScaledObject` instead of `ScaledObject`), and direct interaction with Gateway API routing configuration. The Prometheus approach avoids all of this.
 
 **Cold start and request handling**: When KEDA scales from zero, there is a window (~15-30s) where no pods are available. During manual testing, we confirmed that Envoy Gateway returns **503 immediately** when there are zero upstream endpoints — it short-circuits before retry logic is engaged, so BackendTrafficPolicy retry/timeout policies **do not help**. This is a fundamental Envoy behavior, not a configuration issue.
 
-**KubeElasti** (CNCF Sandbox) is the chosen solution: it manipulates EndpointSlices to redirect traffic to a resolver proxy during scale-from-zero, queuing requests until pods are ready. It coordinates with KEDA via annotations (pausing/resuming ScaledObject). The composition will generate an `ElastiService` alongside the ScaledObject when `minReplicas: 0`.
+**KubeElasti** (CNCF Sandbox) was evaluated as a cold-start solution but is **not compatible with Crossplane**. Three upstream bugs were found during manual testing: (1) `sync.Once` in informer registration is not reset on failure, causing silent failures when the Deployment isn't ready at first reconcile; (2) the `triggers` field is required but undocumented; (3) `checkAndCreatePrivateService` uses `DeepCopy` on the public Service, which copies Crossplane's ownerReferences (`controller: true`), then fails when setting its own controller reference. Bug #3 is a fundamental incompatibility — any controller-managed Service will hit this. Cold-start request handling during scale-from-zero remains an open problem; users should expect ~15-30s of 503s when scaling from zero.
 
 ### Discussion: Which scaling API approach? — **Resolved**
 
@@ -111,7 +111,7 @@ Modify `kcl/backend-resources.k` to:
 
 3. **Prometheus trigger**: Add Prometheus-based scaling for scale-to-zero:
    - When `scaling.prometheusAddress` is set → generate ScaledObject with Prometheus trigger instead of CPU/memory triggers
-   - PromQL query: `sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~"http-.*"}[2m]))` — downstream listener metric observable without running pods
+   - PromQL query: `sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/<namespace>/<name>/.*"}[2m]))` — per-app upstream cluster metric using Envoy's naming convention
    - `prometheusAddress` specifies the Prometheus server URL
    - `requestsPerReplica` (default 100) used as Prometheus trigger `threshold` — KEDA calculates desired replicas as `metricValue / threshold`
    - Enables `minReplicas: 0` for scale-to-zero
@@ -199,7 +199,7 @@ What **won't** transfer:
 
 ### Scaling (KEDA — Prometheus + Scale-to-Zero)
 - [x] XRD: Add `spec.scaling.prometheusAddress` field (string; presence selects Prometheus trigger, required for `minReplicas: 0`)
-- [x] KCL: ScaledObject generation with Prometheus trigger when `prometheusAddress` is set — query uses `envoy_http_downstream_rq_total` downstream listener metric
+- [x] KCL: ScaledObject generation with Prometheus trigger when `prometheusAddress` is set — query uses `envoy_cluster_upstream_rq_total` per-app upstream metric
 - [x] KCL: Validate `minReplicas: 0` requires `scaling.prometheusAddress` (CPU/memory triggers cannot support scale-to-zero)
 - [x] Tests: Install Prometheus (kube-prometheus-stack) in test cluster setup
 - [x] Tests: Prometheus trigger scaling test — assert ScaledObject with correct trigger type, serverAddress, and query
@@ -210,14 +210,15 @@ What **won't** transfer:
 - [x] KCL: Use `requestsPerReplica` as Prometheus trigger threshold (currently hardcoded to `"1"`)
 - [x] Tests: Update Prometheus scaling tests to assert configurable threshold
 
-### Cold-Start Request Handling (KubeElasti)
+### Cold-Start Request Handling (KubeElasti) — Abandoned
 - [x] Investigate Envoy Gateway retry/timeout policies — confirmed NOT viable (Envoy 503s immediately with 0 endpoints)
 - [x] Research KubeElasti (CNCF Sandbox) as cold-start solution
 - [x] Install KubeElasti in test cluster setup
 - [x] KCL: Generate `ElastiService` CRD alongside ScaledObject when `minReplicas: 0`
-- [ ] Manual verification: deploy app with scale-to-zero, confirm requests are queued during scale-from-zero instead of 503
-- [x] Tests: Chainsaw test for ElastiService generation
-- [ ] Feature request to crossplane-kubernetes to install KubeElasti on managed clusters
+- [x] Manual verification: KubeElasti is **not compatible with Crossplane** — three upstream bugs found (sync.Once not reset, undocumented triggers field, DeepCopy copies ownerReferences breaking controller reference)
+- [x] KCL: Removed ElastiService generation; cold-start 503s accepted as known limitation
+- [~] Tests: Chainsaw test for ElastiService generation — removed (ElastiService no longer generated)
+- [~] Feature request to crossplane-kubernetes to install KubeElasti — not needed (KubeElasti abandoned)
 
 ### Integration with crossplane-kubernetes
 - [ ] Reconcile gateway parentRef name (currently hardcoded `contour`)
@@ -248,3 +249,5 @@ What **won't** transfer:
 | 2026-02-22 | Envoy Gateway cannot hold requests during scale-from-zero; cold-start 503s are a documented limitation | BackendTrafficPolicy retry/timeout policies do not help because Envoy short-circuits with 503 when there are 0 upstream endpoints — retry logic is never engaged | Cold-start section in PRD corrected; KubeElasti researched as potential solution but deferred to follow-up PRD |
 | 2026-02-23 | Integrate KubeElasti into this PRD | Cold-start 503s are unacceptable for production scale-to-zero; KubeElasti is the best available solution (CNCF Sandbox, works at EndpointSlice level, coordinates with KEDA via pause/resume annotations) | New milestone added: install KubeElasti, generate ElastiService in KCL, verify manually, add tests, then request crossplane-kubernetes to install it on managed clusters |
 | 2026-02-23 | Add `scaling.requestsPerReplica` field (default 100) | Prometheus trigger threshold was hardcoded to `"1"`, meaning KEDA would target 1 replica per req/s — far too aggressive for most applications. Users need to specify how many requests a single replica can handle so KEDA calculates desired replicas correctly (`metricValue / threshold`) | New XRD field `spec.scaling.requestsPerReplica`; KCL uses this as Prometheus trigger threshold; default 100 is reasonable for typical web services |
+| 2026-02-23 | Abandon KubeElasti — incompatible with Crossplane | Three upstream bugs found: (1) `sync.Once` not reset on informer failure, (2) undocumented `triggers` field requirement, (3) `checkAndCreatePrivateService` uses `DeepCopy` which copies Crossplane's ownerReferences, then fails setting its own controller reference. Bug #3 is a fundamental incompatibility with any controller-managed Service | ElastiService removed from KCL composition; cold-start 503s during scale-from-zero accepted as known limitation; KubeElasti installation removed from crossplane-kubernetes feature request scope |
+| 2026-02-23 | Switch Prometheus query from downstream to upstream metric | `envoy_http_downstream_rq_total` matches ALL workloads on the Gateway (per-listener, not per-app). `envoy_cluster_upstream_rq_total` with `envoy_cluster_name=~"httproute/<namespace>/<name>/.*"` scopes to a specific app using Envoy's cluster naming convention | PromQL query updated in KCL and tests; per-app scaling now works correctly; query uses `_namespace` and `_name` template variables |

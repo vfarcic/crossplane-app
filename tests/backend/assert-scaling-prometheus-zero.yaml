@@ -14,9 +14,6 @@ spec:
     - apiVersion: apps/v1
       kind: Deployment
       name: backend
-    - apiVersion: elasti.truefoundry.com/v1alpha1
-      kind: ElastiService
-      name: backend
     - apiVersion: keda.sh/v1alpha1
       kind: ScaledObject
       name: backend
@@ -42,22 +39,5 @@ spec:
   - type: prometheus
     metadata:
       serverAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
-      query: sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~"http-.*"}[2m]))
+      query: sum(rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~"httproute/($namespace)/backend/.*"}[2m]))
       threshold: "100"
----
-apiVersion: elasti.truefoundry.com/v1alpha1
-kind: ElastiService
-metadata:
-  name: backend
-  labels:
-    app.kubernetes.io/name: backend
-spec:
-  service: backend
-  minTargetReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: deployments
-    name: backend
-  autoscaler:
-    name: backend
-    type: keda

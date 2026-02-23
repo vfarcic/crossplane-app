@@ -67,8 +67,6 @@ def "main setup" [] {
             --all --timeout 300s
     )
 
-    main apply provider_kubernetes_config
-
     kubectl create namespace a-team
 
     main print source

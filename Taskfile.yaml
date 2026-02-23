@@ -41,7 +41,7 @@ tasks:
     cmds:
       - source .env
       - task: package-apply
-      - KUBECONFIG=kubeconfig-dot-app.yaml chainsaw test
+      - KUBECONFIG=kubeconfig-dot-app.yaml chainsaw test --fail-fast
     watch: true
     sources:
       - kcl/*.k
@@ -54,4 +54,4 @@ tasks:
       - task: package-generate
     cmds:
       - task: package-apply
-      - KUBECONFIG=kubeconfig-dot-app.yaml chainsaw test
+      - KUBECONFIG=kubeconfig-dot-app.yaml chainsaw test --fail-fast

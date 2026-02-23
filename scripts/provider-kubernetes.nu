@@ -1,24 +1,4 @@
 #!/usr/bin/env nu
 
-# Creates ClusterProviderConfig for provider-kubernetes with InjectedIdentity
-#
-# Examples:
-# > main apply provider_kubernetes_config
-def "main apply provider_kubernetes_config" [] {
-
-    print $"Creating (ansi yellow_bold)provider-kubernetes ClusterProviderConfig(ansi reset)..."
-
-    {
-        apiVersion: "kubernetes.m.crossplane.io/v1alpha1"
-        kind: "ClusterProviderConfig"
-        metadata: {
-            name: "local"
-        }
-        spec: {
-            credentials: {
-                source: "InjectedIdentity"
-            }
-        }
-    } | to yaml | kubectl apply --filename -
-
-}
+# Provider-kubernetes ProviderConfig is created per-namespace in test steps.
+# This script is kept as a no-op placeholder to avoid breaking the source import in dot.nu.

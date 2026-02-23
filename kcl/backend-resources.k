@@ -22,7 +22,7 @@ _object = lambda manifest: any, suffix: str -> any {
             forProvider.manifest = manifest
             providerConfigRef = {
                 name = _providerConfigName
-                kind = "ClusterProviderConfig"
+                kind = "ProviderConfig"
             }
         }
     }

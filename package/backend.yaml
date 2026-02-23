@@ -46,7 +46,7 @@ spec:
                       forProvider.manifest = manifest
                       providerConfigRef = {
                           name = _providerConfigName
-                          kind = "ClusterProviderConfig"
+                          kind = "ProviderConfig"
                       }
                   }
               }

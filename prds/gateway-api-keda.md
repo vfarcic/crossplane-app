@@ -206,9 +206,9 @@ What **won't** transfer:
 - [x] Tests: Scale-to-zero test — assert ScaledObject with `minReplicaCount: 0` and Prometheus trigger
 - [x] Manual verification: scale-to-zero and scale-from-zero confirmed working in KinD with Envoy Gateway + KEDA + Prometheus
 - [ ] Reconcile Prometheus service URL/namespace with crossplane-kubernetes (currently `http://kube-prometheus-stack-prometheus.prometheus-system:9090`)
-- [ ] XRD: Add `spec.scaling.requestsPerReplica` field (integer, default 100)
-- [ ] KCL: Use `requestsPerReplica` as Prometheus trigger threshold (currently hardcoded to `"1"`)
-- [ ] Tests: Update Prometheus scaling tests to assert configurable threshold
+- [x] XRD: Add `spec.scaling.requestsPerReplica` field (integer, default 100)
+- [x] KCL: Use `requestsPerReplica` as Prometheus trigger threshold (currently hardcoded to `"1"`)
+- [x] Tests: Update Prometheus scaling tests to assert configurable threshold
 
 ### Cold-Start Request Handling (KubeElasti)
 - [x] Investigate Envoy Gateway retry/timeout policies — confirmed NOT viable (Envoy 503s immediately with 0 endpoints)

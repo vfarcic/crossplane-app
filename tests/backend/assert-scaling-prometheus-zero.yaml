@@ -43,7 +43,7 @@ spec:
     metadata:
       serverAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
       query: sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~"http-.*"}[2m]))
-      threshold: "1"
+      threshold: "100"
 ---
 apiVersion: elasti.truefoundry.com/v1alpha1
 kind: ElastiService

@@ -182,7 +182,7 @@ if _spec.scaling?.enabled:
             metadata = {
                 serverAddress = _prom
                 query = "sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=~\"http-.*\"}[2m]))"
-                threshold = "1"
+                threshold = str(_spec.scaling?.requestsPerReplica or 100)
             }
         }
     ] if _prom else [

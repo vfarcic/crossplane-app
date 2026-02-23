@@ -9,3 +9,4 @@ spec:
   scaling:
     enabled: true
     prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+    requestsPerReplica: 200

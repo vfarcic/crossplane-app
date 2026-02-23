@@ -300,6 +300,26 @@ if _spec.scaling?.enabled and _spec.minReplicas == 0 and _spec.scaling?.promethe
             }
         }
     }, "http-scaled-object")]
+    _items += [_object({
+        apiVersion = "gateway.networking.k8s.io/v1beta1"
+        kind = "ReferenceGrant"
+        metadata = {
+            name = "{}-httproute".format(_name)
+            namespace = "keda"
+        }
+        spec = {
+            from = [{
+                group = "gateway.networking.k8s.io"
+                kind = "HTTPRoute"
+                namespace = _targetNamespace
+            }]
+            to = [{
+                group = ""
+                kind = "Service"
+                name = "keda-add-ons-http-interceptor-proxy"
+            }]
+        }
+    }, "reference-grant")]
 
 if _spec.db?.storeName and _spec.db?.secret:
     _items += [_object({

@@ -263,10 +263,10 @@ HTTPScaledObject, external-push trigger, and interceptor backendRef are currentl
 
 **ReferenceGrant**: Gateway API requires a per-app ReferenceGrant in the `keda` namespace to allow cross-namespace HTTPRoute→Service references to the interceptor. The `namespace` field in `spec.from` is required (no wildcard support), so crossplane-kubernetes cannot create a universal grant. The per-app ReferenceGrant is created by the composition as an Object CR — since all resources are Object-wrapped, provider-kubernetes places it in the `keda` namespace correctly. For local KinD testing, the setup script (`scripts/keda-http-addon.nu`) creates a ReferenceGrant covering the test namespace.
 
-- [ ] KCL: Gate HTTPScaledObject, external-push trigger, and interceptor HTTPRoute backendRef on `routing == "gateway-api"`
-- [ ] KCL: Generate per-app ReferenceGrant in `keda` namespace when `routing == "gateway-api"` AND `minReplicas == 0` AND `prometheusAddress` — Object wrapping ensures correct namespace placement
-- [ ] Tests: Update consolidated `assert-scaling.yaml` to include ReferenceGrant assertion (scaling tests now use single combined patch+assert)
-- [ ] Tests: Run full `task test` to confirm all existing tests pass
+- [x] KCL: Gate HTTPScaledObject, external-push trigger, and interceptor HTTPRoute backendRef on `routing == "gateway-api"`
+- [x] KCL: Generate per-app ReferenceGrant in `keda` namespace when `routing == "gateway-api"` AND `minReplicas == 0` AND `prometheusAddress` — Object wrapping ensures correct namespace placement
+- [x] Tests: Update consolidated `assert-scaling.yaml` to include ReferenceGrant assertion (scaling tests now use single combined patch+assert)
+- [x] Tests: Run full `task test` to confirm all existing tests pass
 
 ### Object Wrapping (Mandatory)
 **Implementation approach**: All composed resources are wrapped in `kubernetes.m.crossplane.io/v1alpha1 Object` CRs. There is no "raw" path — every resource goes through provider-kubernetes. A single `_object` lambda wraps any manifest in an Object CR with `providerConfigRef` and sets the target namespace via `forProvider.manifest.metadata.namespace`.

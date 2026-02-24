@@ -14,4 +14,3 @@ spec:
     compositionSelector:
       matchLabels:
         type: backend-db-google
-        location: local

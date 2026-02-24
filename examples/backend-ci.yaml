@@ -18,4 +18,3 @@ spec:
     compositionSelector:
       matchLabels:
         type: backend
-        location: local

@@ -12,7 +12,11 @@
     "git@2.51.2",
     "kubectl-tree@0.4.6",
     "nushell@0.108.0",
-    "upbound@0.40.3"
+    "upbound@0.40.3",
+    "azure-cli@2.81.0",
+    "crossplane-cli@2.1.3",
+    "upcloud-cli@3.29.0",
+    "jq@1.8.1"
   ],
   "shell": {
     "init_hook": [

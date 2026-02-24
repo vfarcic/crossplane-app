@@ -6,7 +6,6 @@ common.Composition {
         name = "app-backend"
         labels = common.Labels {
             type = "backend"
-            location = "local"
         }
     }
     spec = common.Spec {

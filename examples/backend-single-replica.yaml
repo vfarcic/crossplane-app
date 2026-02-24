@@ -10,12 +10,8 @@ spec:
   image: vfarcic/silly-demo
   tag: "v1.5.235"
   port: 8080
-  host: silly-demo.54.159.206.46.nip.io
+  host: silly-demo.20.75.151.150.nip.io
   routing:
     type: gateway-api
   providerConfigName: a-team
   targetNamespace: dev
-  minReplicas: 1
-  maxReplicas: 10
-  scaling:
-    enabled: true

@@ -16,7 +16,6 @@ spec:
     compositionSelector:
       matchLabels:
         type: backend
-        location: local
 ---
 apiVersion: devopstoolkit.live/v1beta1
 kind: App
@@ -34,4 +33,3 @@ spec:
     compositionSelector:
       matchLabels:
         type: frontend
-        location: local

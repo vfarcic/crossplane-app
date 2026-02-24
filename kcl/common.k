@@ -36,7 +36,6 @@ schema Spec:
 
 schema Labels:
     type: str
-    location: str
 
 schema KubernetesObject:
     name: str

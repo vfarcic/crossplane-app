@@ -15,4 +15,3 @@ spec:
     compositionSelector:
       matchLabels:
         type: ($type)
-        location: local

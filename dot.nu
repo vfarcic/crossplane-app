@@ -78,3 +78,21 @@ def "main destroy" [] {
     main destroy kubernetes kind --name dot-app
 
 }
+
+def "main setup-demo" [] {
+
+    let provider = main get provider --providers [aws, azure, google]
+
+    main create kubernetes kind --name dot-cp
+
+    main apply crossplane --provider $provider --kubernetes-config true --app-config true
+
+    main print source
+
+}
+
+def "main destroy-demo" [] {
+
+    main destroy kubernetes kind --name dot-cp
+
+}

@@ -4,7 +4,6 @@ metadata:
   name: app-frontend
   labels:
     type: frontend
-    location: local
 spec:
   compositeTypeRef:
     apiVersion: devopstoolkit.live/v1beta1

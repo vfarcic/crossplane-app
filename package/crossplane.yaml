@@ -10,13 +10,9 @@ metadata:
     meta.crossplane.io/readme: A Configuration package that defines application types like frontend, backend, and backend with a database.
 spec:
   dependsOn:
-    - provider: xpkg.crossplane.io/crossplane-contrib/provider-upjet-github
-      version: ">=v0.15.0"
     - provider: xpkg.crossplane.io/crossplane-contrib/provider-kubernetes
       version: ">=v1.2.0"
     - function: xpkg.crossplane.io/crossplane-contrib/function-kcl
       version: ">=v0.10.0"
     - function: xpkg.crossplane.io/crossplane-contrib/function-auto-ready
       version: ">=v0.2.0"
-    - function: xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform
-      version: ">=v0.8.0"

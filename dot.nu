@@ -35,8 +35,6 @@ def "main setup" [] {
 
     let provider_files = [
         "function-auto-ready.yaml"
-        "function-patch-and-transform.yaml"
-        "github.yaml"
         "kcl.yaml"
         "provider-kubernetes.yaml"
     ]

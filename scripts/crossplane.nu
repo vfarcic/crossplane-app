@@ -44,7 +44,7 @@ def --env "main apply crossplane" [
 
         print $"\n(ansi green_bold)Applying `dot-application` Configuration...(ansi reset)\n"
 
-        let version = "v4.0.1"
+        let version = "v4.0.2"
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Configuration"

@@ -246,7 +246,7 @@ spec:
               if _spec.minReplicas == 0:
                   assert _spec.scaling?.prometheusAddress, "minReplicas: 0 requires scaling.prometheusAddress (CPU/memory triggers need running pods)"
               _prom = _spec.scaling?.prometheusAddress
-              _prom_query = "sum(rate(envoy_cluster_upstream_rq_total{{envoy_cluster_name=~\"httproute/{}/{}/.*\"}}[2m]))".format(_namespace, _name)
+              _prom_query = "sum(rate(envoy_cluster_upstream_rq_total{{envoy_cluster_name=~\"httproute/{}/{}/.*\"}}[2m]))".format(_targetNamespace, _name)
               _prom_threshold = str(_spec.scaling?.requestsPerReplica or 100)
               _triggers = [
                   {

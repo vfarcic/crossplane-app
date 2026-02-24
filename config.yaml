@@ -4,3 +4,4 @@ metadata:
   name: crossplane-app
 spec:
   package: xpkg.upbound.io/devops-toolkit/dot-application:v4.0.2
+

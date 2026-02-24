@@ -14,3 +14,8 @@ spec:
   routing: gateway-api
   providerConfigName: a-team
   targetNamespace: dev
+  minReplicas: 1
+  maxReplicas: 5
+  scaling:
+    enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090

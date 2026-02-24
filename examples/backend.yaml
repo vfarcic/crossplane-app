@@ -7,15 +7,15 @@ spec:
     compositionSelector:
       matchLabels:
         type: backend
-  image: vfarcic/silly-demo
-  tag: "v1.5.235"
+  image: ghcr.io/vfarcic/silly-demo
+  tag: v1.5.235
   port: 8080
-  host: silly-demo.54.159.206.46.nip.io
-  routing:
-    type: gateway-api
+  host: silly-demo.20.75.151.150.nip.io
+  routing: gateway-api
   providerConfigName: a-team
   targetNamespace: dev
-  minReplicas: 1
-  maxReplicas: 10
+  minReplicas: 0
+  maxReplicas: 5
   scaling:
     enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090

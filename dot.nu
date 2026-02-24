@@ -91,6 +91,10 @@ def "main setup-demo" [] {
 
 def "main destroy-demo" [] {
 
+    main delete crossplane --kind apps.devopstoolkit.live --name silly-demo --namespace a-team
+
+    main delete crossplane --kind clusters.devopstoolkit.ai --name a-team --namespace a-team
+
     main destroy kubernetes kind --name dot-cp
 
 }

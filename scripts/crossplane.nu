@@ -44,7 +44,7 @@ def --env "main apply crossplane" [
 
         print $"\n(ansi green_bold)Applying `dot-application` Configuration...(ansi reset)\n"
 
-        let version = "v4.0.2"
+        let version = "v4.0.3"
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Configuration"
@@ -85,7 +85,7 @@ def --env "main apply crossplane" [
 
         print $"\n(ansi green_bold)Applying `dot-kubernetes` Configuration...(ansi reset)\n"
 
-        let version = "v2.0.12"
+        let version = "v2.0.13"
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Configuration"
@@ -307,13 +307,10 @@ def "main delete crossplane" [
 
     print $"\nWaiting for (ansi green_bold)Crossplane managed resources(ansi reset) to be deleted...\n"
 
-    mut command = { kubectl get managed --output name }
+    mut command = { kubectl --namespace $namespace get managed --output name }
     if ($name | is-not-empty) {
         $command = {
-            (
-                kubectl get managed --output name
-                    --selector $"crossplane.io/claim-name=($name)"
-            )
+            kubectl --namespace $namespace get managed --output name --selector $"crossplane.io/claim-name=($name)"
         }
     }
 

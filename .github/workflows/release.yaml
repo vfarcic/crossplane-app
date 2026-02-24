@@ -11,20 +11,16 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Install Upbound CLI
-        run: |
-          curl -sL "https://cli.upbound.io" | sh
-          sudo mv up /usr/local/bin/
       - name: Install Devbox
         uses: jetpack-io/devbox-install-action@v0.14.0
         with:
           enable-cache: true
       - name: Build the package
         run: |
-          GOBIN=$RUNNER_TEMP go install github.com/maykonlsf/semver-cli/cmd/semver@latest
+          GOBIN=$PWD go install github.com/maykonlsf/semver-cli/cmd/semver@latest
           export UP_TOKEN=${{ secrets.UP_TOKEN }}
           export UP_ACCOUNT=${{ secrets.UP_ACCOUNT }}
-          export VERSION=$($RUNNER_TEMP/semver up release)
+          export VERSION=$(./semver up release)
           devbox run package-publish
       - name: Commit changes
         run: |

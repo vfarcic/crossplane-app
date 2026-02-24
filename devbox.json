@@ -11,7 +11,8 @@
     "vals@0.42.6",
     "git@2.51.2",
     "kubectl-tree@0.4.6",
-    "nushell@0.108.0"
+    "nushell@0.108.0",
+    "upbound@0.40.3"
   ],
   "shell": {
     "init_hook": [

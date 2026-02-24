@@ -12,6 +12,8 @@ spec:
   dependsOn:
     - provider: xpkg.upbound.io/crossplane-contrib/provider-upjet-github
       version: ">=v0.15.0"
+    - provider: xpkg.crossplane.io/crossplane-contrib/provider-kubernetes
+      version: ">=v1.2.0"
     - function: xpkg.upbound.io/crossplane-contrib/function-kcl
       version: ">=v0.10.0"
     - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready

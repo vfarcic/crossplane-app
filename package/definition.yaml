@@ -34,6 +34,19 @@ spec:
                 description: The host address of the application
                 type: string
                 default: devopstoolkit.live
+              routing:
+                description: "Routing implementation: ingress (default) or gateway-api"
+                type: string
+                enum:
+                  - ingress
+                  - gateway-api
+                default: ingress
+              providerConfigName:
+                description: Name of the provider-kubernetes ProviderConfig for Object wrapping (must exist in the same namespace as the App XR)
+                type: string
+              targetNamespace:
+                description: Namespace where actual resources are created (defaults to the XR namespace if not set)
+                type: string
               ingressClassName:
                 description: The Ingress class name
                 type: string
@@ -57,24 +70,35 @@ spec:
                   name:
                     description: The name of the database.
                     type: string
+              minReplicas:
+                description: Number of replicas when scaling is disabled, or minimum replicas when scaling is enabled (0 enables scale-to-zero with KEDA)
+                type: integer
+                minimum: 0
+                default: 1
+              maxReplicas:
+                description: Maximum number of replicas (only used when scaling is enabled)
+                type: integer
+                minimum: 1
+                default: 10
               scaling:
                 type: object
                 properties:
                   enabled:
-                    description: Whether to enable scaling
+                    description: Whether to enable autoscaling (generates KEDA ScaledObject with CPU/memory triggers)
                     type: boolean
                     default: false
-                  min:
-                    description: Minimum number of replicas
+                  prometheusAddress:
+                    description: Prometheus server URL; when set, uses Prometheus trigger instead of CPU/memory (required for scale-to-zero)
+                    type: string
+                  requestsPerReplica:
+                    description: Requests per second each replica handles; used as KEDA Prometheus trigger threshold (only applies when prometheusAddress is set)
                     type: integer
-                    default: 1
-                  max:
-                    description: Maximum number of replicas
-                    type: integer
-                    default: 10
+                    minimum: 1
+                    default: 100
             required:
             - image
             - tag
+            - providerConfigName
           status:
             type: object
             properties:

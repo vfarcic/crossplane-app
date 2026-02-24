@@ -4,6 +4,9 @@ metadata:
   name: backend
 spec:
   template: true
+  timeouts:
+    assert: 120s
+    cleanup: 120s
   bindings:
     - name: name
       value: backend
@@ -12,19 +15,17 @@ spec:
   steps:
     - try:
         - apply:
+            file: ../common/provider-config.yaml
+        - apply:
             file: ../common/install.yaml
         - assert:
             file: ../common/assert-install.yaml
         - assert:
             file: assert-install.yaml
         - patch:
-            file: ../common/hpa-default.yaml
+            file: scaling.yaml
         - assert:
-            file: ../common/assert-hpa-default.yaml
-        - patch:
-            file: hpa.yaml
-        - assert:
-            file: assert-hpa.yaml
+            file: assert-scaling.yaml
         - patch:
             file: pull-secret.yaml
         - assert:
@@ -36,3 +37,13 @@ spec:
             content: kubectl get managed
         - script:
             content: kubectl get all,ingress --namespace $NAMESPACE
+      finally:
+        - script:
+            timeout: 120s
+            content: |
+              kubectl delete apps.devopstoolkit.live backend -n $NAMESPACE --ignore-not-found
+              while kubectl get objects.kubernetes.m.crossplane.io -n $NAMESPACE --no-headers 2>/dev/null | grep -q .; do
+                sleep 2
+              done
+              kubectl delete providerconfig.kubernetes.m.crossplane.io local -n $NAMESPACE --wait=false --ignore-not-found 2>/dev/null || true
+              kubectl patch providerconfig.kubernetes.m.crossplane.io local -n $NAMESPACE --type=merge -p '{"metadata":{"finalizers":[]}}' 2>/dev/null || true

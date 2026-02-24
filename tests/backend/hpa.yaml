@@ -1,9 +1,0 @@
-apiVersion: devopstoolkit.live/v1beta1
-kind: App
-metadata:
-  name: backend
-spec:
-  scaling:
-    enabled: true
-    min: 2
-    max: 5

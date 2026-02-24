@@ -12,7 +12,7 @@ def --env "main create kubernetes" [
 
     $env.KUBECONFIG = $"($env.PWD)/kubeconfig-($name).yaml"
     $"export KUBECONFIG=($env.KUBECONFIG)\n" | save --append .env
-    $"export KUBECONFIG_($name | str upcase)=($env.KUBECONFIG)\n" | save --append .env
+    $"export KUBECONFIG_($name | str upcase | str replace --all '-' '_')=($env.KUBECONFIG)\n" | save --append .env
 
     if $provider == "google" {
 

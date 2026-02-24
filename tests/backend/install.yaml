@@ -8,6 +8,7 @@ spec:
   port: 8080
   host: silly-demo.54.204.223.4.nip.io
   ingressClassName: traefik
+  providerConfigName: local
   crossplane:
     compositionSelector:
       matchLabels:

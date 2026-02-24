@@ -5,6 +5,11 @@ source  scripts/kubernetes.nu
 source  scripts/ingress.nu
 source  scripts/crossplane.nu
 source  scripts/external-secrets.nu
+source  scripts/gateway-api.nu
+source  scripts/keda.nu
+source  scripts/prometheus.nu
+source  scripts/keda-http-addon.nu
+source  scripts/provider-kubernetes.nu
 
 def main [] {}
 
@@ -12,21 +17,29 @@ def "main setup" [] {
 
     rm --force .env
 
-    main create kubernetes kind
+    main create kubernetes kind --name dot-app
 
     main apply ingress nginx --provider kind
+
+    main apply gateway_api
+
+    main apply keda
+
+    apply_prometheus
+
+    main apply keda_http_addon
 
     main apply crossplane
 
     print $"Applying (ansi yellow_bold)Crossplane Providers(ansi reset)..."
 
     let provider_files = [
-        "cluster-role.yaml"
         "function-auto-ready.yaml"
         "function-patch-and-transform.yaml"
         "github.yaml"
         "kcl.yaml"
-    ]  
+        "provider-kubernetes.yaml"
+    ]
     for file in $provider_files {
         kubectl apply --filename $"providers/($file)"
     }
@@ -38,7 +51,6 @@ def "main setup" [] {
     sleep 1sec
 
     let package_files = [
-        "frontend.yaml"
         "backend.yaml"
     ]
     for file in $package_files {
@@ -63,6 +75,6 @@ def "main setup" [] {
 
 def "main destroy" [] {
 
-    main destroy kubernetes kind
+    main destroy kubernetes kind --name dot-app
 
 }

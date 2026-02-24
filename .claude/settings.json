@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(gh api --paginate *)",
+      "Bash(gh api -X GET *)",
+      "Bash(gh api --method GET *)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

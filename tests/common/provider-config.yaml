@@ -1,0 +1,7 @@
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: local
+spec:
+  credentials:
+    source: InjectedIdentity

@@ -11,12 +11,11 @@ tasks:
   package-apply:
     desc: Applies Compositions and Composite Resource Definition.
     cmds:
-      - cmd: kubectl --kubeconfig kubeconfig-dot.yaml apply --filename package/definition.yaml && sleep 1
+      - cmd: kubectl --kubeconfig kubeconfig-dot-app.yaml apply --filename package/definition.yaml && sleep 1
       - for: [
-          "frontend.yaml",
           "backend.yaml"
         ]
-        cmd: kubectl --kubeconfig kubeconfig-dot.yaml apply --filename package/{{ .ITEM }}
+        cmd: kubectl --kubeconfig kubeconfig-dot-app.yaml apply --filename package/{{ .ITEM }}
   package-publish:
     desc: Builds and pushes the package.
     deps:
@@ -42,12 +41,11 @@ tasks:
     cmds:
       - source .env
       - task: package-apply
-      - KUBECONFIG=kubeconfig-dot.yaml chainsaw test
+      - KUBECONFIG=kubeconfig-dot-app.yaml chainsaw test --fail-fast
     watch: true
     sources:
       - kcl/*.k
       - tests/**/*.yaml
-      - package/frontend.yaml
     generates:
       - package/*.yaml
   test-once:
@@ -56,4 +54,4 @@ tasks:
       - task: package-generate
     cmds:
       - task: package-apply
-      - KUBECONFIG=kubeconfig-dot.yaml chainsaw test
+      - KUBECONFIG=kubeconfig-dot-app.yaml chainsaw test --fail-fast

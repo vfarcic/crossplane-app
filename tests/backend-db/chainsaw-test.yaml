@@ -4,6 +4,9 @@ metadata:
   name: backend-db
 spec:
   template: true
+  timeouts:
+    assert: 120s
+    cleanup: 120s
   bindings:
     - name: name
       value: backend-db
@@ -11,6 +14,8 @@ spec:
       value: backend
   steps:
     - try:
+        - apply:
+            file: ../common/provider-config.yaml
         - apply:
             file: install.yaml
         - assert:
@@ -24,3 +29,13 @@ spec:
             content: kubectl get managed
         - script:
             content: kubectl get all,ingress --namespace $NAMESPACE
+      finally:
+        - script:
+            timeout: 120s
+            content: |
+              kubectl delete apps.devopstoolkit.live backend-db -n $NAMESPACE --ignore-not-found
+              while kubectl get objects.kubernetes.m.crossplane.io -n $NAMESPACE --no-headers 2>/dev/null | grep -q .; do
+                sleep 2
+              done
+              kubectl delete providerconfig.kubernetes.m.crossplane.io local -n $NAMESPACE --wait=false --ignore-not-found 2>/dev/null || true
+              kubectl patch providerconfig.kubernetes.m.crossplane.io local -n $NAMESPACE --type=merge -p '{"metadata":{"finalizers":[]}}' 2>/dev/null || true

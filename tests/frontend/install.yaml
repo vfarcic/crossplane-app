@@ -4,10 +4,11 @@ metadata:
   name: ($name)
 spec:
   image: ghcr.io/vfarcic/silly-demo
-  tag: "1.2.3"
+  tag: "v1.5.235"
   port: 8080
   host: silly-demo.54.204.223.4.nip.io
   ingressClassName: traefik
+  providerConfigName: local
   frontend:
     backendUrl: http://silly-demo-backend.54.204.223.4.nip.io
   crossplane:

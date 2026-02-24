@@ -1,48 +1,19 @@
-name: Build
+name: Test
 on:
-  push:
-    # branches: # Removed to trigger on all branches
-    #   - main
+  pull_request:
+    branches:
+      - main
 jobs:
-  build-package:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
           fetch-depth: 0
-      # - name: Install Crossplane CLI
-      #   run: |
-      #     curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | sh
-      #     sudo mv crossplane /usr/local/bin
-      - name: Install Upbound CLI
-        run: |
-          curl -sL "https://cli.upbound.io" | sh
-          sudo mv up /usr/local/bin/
       - name: Install Devbox
         uses: jetpack-io/devbox-install-action@v0.14.0
         with:
           enable-cache: true
       - name: Test
         run: devbox run test
-      - name: Build the package
-        if: github.ref == 'refs/heads/main'
-        run: |
-          GOBIN=$PWD go install github.com/maykonlsf/semver-cli/cmd/semver@latest
-          export UP_TOKEN=${{ secrets.UP_TOKEN }}
-          export UP_ACCOUNT=${{ secrets.UP_ACCOUNT }}
-          export VERSION=$(./semver up release)
-          devbox run package-publish
-      - name: Commit changes
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .
-          git commit -m "Config update [skip ci]"
-      - name: Push changes
-        if: github.ref == 'refs/heads/main'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.CROSSPLANE_TOKEN }}
-          branch: ${{ github.ref }}

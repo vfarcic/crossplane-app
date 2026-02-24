@@ -5,6 +5,7 @@ metadata:
 spec:
   template: true
   timeouts:
+    assert: 120s
     cleanup: 120s
   bindings:
     - name: name

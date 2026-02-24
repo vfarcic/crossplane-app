@@ -53,7 +53,7 @@ All composed resources are wrapped in `kubernetes.m.crossplane.io/v1alpha1 Objec
 ```yaml
 spec:
   providerConfigName: my-cluster  # required — ProviderConfig for provider-kubernetes
-  targetNamespace: my-app-ns      # required — namespace where resources are created
+  targetNamespace: my-app-ns      # optional — defaults to XR namespace if not set
 ```
 
 **Why mandatory**: Gateway API's ReferenceGrant requires a per-app entry in the `keda` namespace for cross-namespace HTTPRoute→Service references (cold-start interceptor routing). Crossplane's `target: Default` overrides the namespace on namespace-scoped composed resources, making it impossible to create resources in a different namespace than the XR's. Object wrapping solves this — provider-kubernetes respects `forProvider.manifest.metadata.namespace` regardless of where the Object CR itself lives. By always using Object wrapping, cold-start handling works on every cluster (same-cluster or remote), and the composition has a single code path.

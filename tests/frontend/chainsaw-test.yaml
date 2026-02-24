@@ -5,12 +5,13 @@ metadata:
 spec:
   template: true
   timeouts:
+    assert: 120s
     cleanup: 120s
   bindings:
     - name: name
       value: frontend
     - name: type
-      value: backend
+      value: backend # frontend composition consolidated into backend
   steps:
     - try:
         - apply:

@@ -21,10 +21,10 @@ jobs:
           enable-cache: true
       - name: Build the package
         run: |
-          GOBIN=$PWD go install github.com/maykonlsf/semver-cli/cmd/semver@latest
+          GOBIN=$RUNNER_TEMP go install github.com/maykonlsf/semver-cli/cmd/semver@latest
           export UP_TOKEN=${{ secrets.UP_TOKEN }}
           export UP_ACCOUNT=${{ secrets.UP_ACCOUNT }}
-          export VERSION=$(./semver up release)
+          export VERSION=$($RUNNER_TEMP/semver up release)
           devbox run package-publish
       - name: Commit changes
         run: |
@@ -33,7 +33,7 @@ jobs:
           git add .
           git commit -m "Config update [skip ci]"
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v1.0.0
         with:
           github_token: ${{ secrets.CROSSPLANE_TOKEN }}
           branch: ${{ github.ref }}

@@ -74,15 +74,13 @@ _items = [
                         ports = [
                             {containerPort = _spec.port }
                         ]
-                        if _spec.frontend?.backendUrl:
-                            env = [
+                        if _spec.frontend?.backendUrl or _spec.db?.secret:
+                            env = ([
                                 {
                                     name = "BACKEND_URL"
                                     value = _spec.frontend.backendUrl
                                 }
-                            ]
-                        if _spec.db?.secret:
-                            env = [
+                            ] if _spec.frontend?.backendUrl else []) + ([
                                 {
                                     name = "DB_ENDPOINT"
                                     valueFrom.secretKeyRef = {
@@ -112,7 +110,7 @@ _items = [
                                     name = "DB_NAME"
                                     value = _spec.db.name
                                 },
-                            ]
+                            ] if _spec.db?.secret else [])
                     }]
                 }
             }

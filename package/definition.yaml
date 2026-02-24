@@ -78,6 +78,7 @@ spec:
               maxReplicas:
                 description: Maximum number of replicas (only used when scaling is enabled)
                 type: integer
+                minimum: 1
                 default: 10
               scaling:
                 type: object
@@ -92,6 +93,7 @@ spec:
                   requestsPerReplica:
                     description: Requests per second each replica handles; used as KEDA Prometheus trigger threshold (only applies when prometheusAddress is set)
                     type: integer
+                    minimum: 1
                     default: 100
             required:
             - image

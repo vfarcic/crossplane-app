@@ -17,7 +17,6 @@ def --env "main create kubernetes" [
 
     $env.KUBECONFIG = $"($env.PWD)/kubeconfig-($name).yaml"
     $"export KUBECONFIG=($env.KUBECONFIG)\n" | save --append .env
-    $"export KUBECONFIG_($name | str upcase)=($env.KUBECONFIG)\n" | save --append .env
 
     if $provider == "google" {
 
@@ -299,14 +298,17 @@ def "main create kubernetes_creds" [
 }
 
 def --env "main get kubeconfig" [
-    provider: string                  # The Kubernetes provider (azure, google, upcloud,)
+    provider: string                  # The Kubernetes provider (aws, azure, google, upcloud)
     --name = "dot"                    # Name of the Kubernetes cluster
     --resource_group = ""             # The resource group for Azure clusters
     --project-id = ""                 # The project ID for Google Cloud clusters
+    --region = "us-east-1"            # The region for AWS EKS clusters
     --destination = "kubeconfig.yaml" # Path to save the kubeconfig file
 ] {
 
-    if $provider == "upcloud" {
+    if $provider == "aws" {
+        aws eks update-kubeconfig --name $name --region $region --kubeconfig $destination
+    } else if $provider == "upcloud" {
         upctl kubernetes config $name --output yaml --write $env.KUBECONFIG --write $destination
     } else if $provider == "azure" {
         az aks get-credentials --resource-group $resource_group --name $name --file $env.KUBECONFIG --file $destination
@@ -609,5 +611,7 @@ aws_secret_access_key = ($aws_secret_access_key)
     )
     $"export OIDC_PROVIDER=($oidc_provider)\n"
         | save --append .env
+
+    main get kubeconfig aws --name $name --region $region
 
 }

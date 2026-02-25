@@ -8,3 +8,4 @@
 /application.xpkg
 /tmp
 /azure-creds.json
+/aws-creds.conf

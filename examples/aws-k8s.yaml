@@ -6,8 +6,8 @@ spec:
   crossplane:
     compositionSelector:
       matchLabels:
-        provider: azure
-        cluster: aks
+        provider: aws
+        cluster: eks
   parameters:
     nodeSize: medium
     minNodeCount: 2

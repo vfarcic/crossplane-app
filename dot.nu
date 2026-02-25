@@ -85,6 +85,8 @@ def "main setup-demo" [] {
 
     main apply crossplane --provider $provider --kubernetes-config true --app-config true
 
+    kubectl create namespace a-team
+
     main print source
 
 }

@@ -1,0 +1,23 @@
+apiVersion: devopstoolkit.ai/v2
+kind: Cluster
+metadata:
+  name: a-team
+spec:
+  crossplane:
+    compositionSelector:
+      matchLabels:
+        provider: google
+        cluster: gke
+  parameters:
+    nodeSize: medium
+    minNodeCount: 1
+    apps:
+      envoyGateway:
+        enabled: true
+      keda:
+        enabled: true
+      prometheus:
+        enabled: true
+    namespaces:
+      - dev
+      - production

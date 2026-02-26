@@ -302,19 +302,18 @@ def --env "main get kubeconfig" [
     --name = "dot"                    # Name of the Kubernetes cluster
     --resource_group = ""             # The resource group for Azure clusters
     --project-id = ""                 # The project ID for Google Cloud clusters
-    --region = "us-east-1"            # The region for AWS EKS clusters
     --destination = "kubeconfig.yaml" # Path to save the kubeconfig file
 ] {
 
     if $provider == "aws" {
-        aws eks update-kubeconfig --name $name --region $region --kubeconfig $destination
+        aws eks update-kubeconfig --name $name --region us-east-1 --kubeconfig $destination
     } else if $provider == "upcloud" {
         upctl kubernetes config $name --output yaml --write $env.KUBECONFIG --write $destination
     } else if $provider == "azure" {
         az aks get-credentials --resource-group $resource_group --name $name --file $env.KUBECONFIG --file $destination
     } else if $provider == "google" {
         $env.KUBECONFIG = $destination
-        gcloud container clusters get-credentials $name --project $project_id --zone us-east1-b
+        gcloud container clusters get-credentials $name --project $project_id --region us-east1
     } else {
         print $"(ansi red_bold)($provider)(ansi reset) is not a supported"
         return
@@ -612,6 +611,6 @@ aws_secret_access_key = ($aws_secret_access_key)
     $"export OIDC_PROVIDER=($oidc_provider)\n"
         | save --append .env
 
-    main get kubeconfig aws --name $name --region $region
+    main get kubeconfig aws --name $name
 
 }

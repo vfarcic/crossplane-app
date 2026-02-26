@@ -54,11 +54,20 @@ def --env "main apply crossplane" [
 
     }
 
-    if ($db_config or $kubernetes_config or $db_provider) and $provider == "google" {
+    if ($db_config or $db_provider) and $provider == "google" {
 
         start $"https://console.cloud.google.com/marketplace/product/google/sqladmin.googleapis.com?project=($provider_data.project_id)"
 
-        print $"\n(ansi yellow_bold)ENABLE(ansi reset) the API.\nPress the (ansi yellow_bold)enter key(ansi reset) to continue.\n"
+        print $"\n(ansi yellow_bold)ENABLE(ansi reset) the SQL Admin API.\nPress the (ansi yellow_bold)enter key(ansi reset) to continue.\n"
+        input
+
+    }
+
+    if $kubernetes_config and $provider == "google" {
+
+        start $"https://console.cloud.google.com/marketplace/product/google/container.googleapis.com?project=($provider_data.project_id)"
+
+        print $"\n(ansi yellow_bold)ENABLE(ansi reset) the Kubernetes Engine API.\nPress the (ansi yellow_bold)enter key(ansi reset) to continue.\n"
         input
 
     }
@@ -218,9 +227,9 @@ def --env "main apply crossplane" [
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Provider"
-            metadata: { name: "crossplane-provider-kubernetes" }
+            metadata: { name: "crossplane-contrib-provider-kubernetes" }
             spec: {
-                package: "xpkg.crossplane.io/crossplane-contrib/provider-kubernetes:v1.2.0"
+                package: "xpkg.crossplane.io/crossplane-contrib/provider-kubernetes:v1.2.1"
                 runtimeConfigRef: { name: "crossplane-provider-kubernetes" }
             }
         } | to yaml | kubectl apply --filename -
@@ -310,7 +319,7 @@ def "main delete crossplane" [
     mut command = { kubectl --namespace $namespace get managed --output name }
     if ($name | is-not-empty) {
         $command = {
-            kubectl --namespace $namespace get managed --output name --selector $"crossplane.io/claim-name=($name)"
+            kubectl --namespace $namespace get managed --output name --selector $"crossplane.io/composite=($name)"
         }
     }
 

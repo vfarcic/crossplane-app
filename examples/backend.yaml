@@ -10,7 +10,7 @@ spec:
   image: ghcr.io/vfarcic/silly-demo
   tag: v1.5.235
   port: 8080
-  host: silly-demo.20.75.151.150.nip.io
+  host: silly-demo.34.231.32.236.nip.io
   routing: gateway-api
   providerConfigName: a-team
   targetNamespace: dev

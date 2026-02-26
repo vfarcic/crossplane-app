@@ -9,3 +9,4 @@
 /tmp
 /azure-creds.json
 /aws-creds.conf
+/gke_gcloud_auth_plugin_cache

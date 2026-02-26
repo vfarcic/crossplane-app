@@ -94,7 +94,7 @@ def --env "main apply crossplane" [
 
         print $"\n(ansi green_bold)Applying `dot-kubernetes` Configuration...(ansi reset)\n"
 
-        let version = "v2.0.16"
+        let version = "v2.0.17"
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Configuration"

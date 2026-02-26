@@ -94,7 +94,7 @@ def --env "main apply crossplane" [
 
         print $"\n(ansi green_bold)Applying `dot-kubernetes` Configuration...(ansi reset)\n"
 
-        let version = "v2.0.15"
+        let version = "v2.0.16"
         {
             apiVersion: "pkg.crossplane.io/v1"
             kind: "Configuration"
@@ -324,13 +324,13 @@ def "main delete crossplane" [
     }
 
     mut resources = (do $command)
-    mut counter = ($resources | wc -l | into int)
+    mut counter = ($resources | lines | length)
 
     while $counter > 0 {
         print $"($resources)\nWaiting for remaining (ansi green_bold)($counter)(ansi reset) managed resources to be (ansi green_bold)removed(ansi reset)...\n"
         sleep 10sec
         $resources = (do $command)
-        $counter = ($resources | wc -l | into int)
+        $counter = ($resources | lines | length)
     }
 
 }

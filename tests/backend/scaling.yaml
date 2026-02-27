@@ -8,5 +8,4 @@ spec:
   maxReplicas: 5
   scaling:
     enabled: true
-    prometheusAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
     requestsPerReplica: 100

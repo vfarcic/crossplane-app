@@ -90,6 +90,7 @@ spec:
                   prometheusAddress:
                     description: Prometheus server URL; when set, uses Prometheus trigger instead of CPU/memory (required for scale-to-zero)
                     type: string
+                    default: http://kube-prometheus-stack-prometheus.prometheus-system:9090
                   requestsPerReplica:
                     description: Requests per second each replica handles; used as KEDA Prometheus trigger threshold (only applies when prometheusAddress is set)
                     type: integer

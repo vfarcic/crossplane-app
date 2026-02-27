@@ -32,8 +32,6 @@ apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
   name: backend
-spec:
-  triggers:
-  - type: prometheus
-    metadata:
-      serverAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090
+(spec.triggers[?type == 'prometheus']):
+- metadata:
+    serverAddress: http://kube-prometheus-stack-prometheus.prometheus-system:9090

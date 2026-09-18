@@ -33,7 +33,7 @@ jobs:
           git add .
           git commit -m "Config update [skip ci]"
       - name: Push changes
-        uses: ad-m/github-push-action@v1.0.0
+        uses: ad-m/github-push-action@v1.3.0
         with:
           github_token: ${{ secrets.CROSSPLANE_TOKEN }}
           branch: ${{ github.ref }}

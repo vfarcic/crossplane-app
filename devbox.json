@@ -11,7 +11,7 @@
     "vals@0.42.6",
     "git@2.55.0",
     "kubectl-tree@0.6.0",
-    "nushell@0.108.0",
+    "nushell@0.115.1",
     "upbound@0.40.3",
     "azure-cli@2.89.1",
     "crossplane-cli@2.4.1",

@@ -8,7 +8,7 @@
     "kubernetes-helm@4.3.2",
     "kyverno-chainsaw@0.2.15",
     "kcl-cli@0.8.9",
-    "vals@0.47.0",
+    "vals@0.51.1",
     "git@2.56.0",
     "kubectl-tree@0.6.0",
     "nushell@0.116.1",
